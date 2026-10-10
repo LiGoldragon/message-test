@@ -10,8 +10,8 @@ The scenarios are written to two designs in the Primary repository
 - Message: `flows/73ada7/reports/build/message-design.md` at 23d2c4c8
   (blob 24fee3c0), sections 3 to 9; tests are numbered as its section 9
   numbers them.
-- Flow: `flows/f5a6e9/reports/flow-buildable-design.md` at 186dd701
-  (blob 3bbe7b6a), sections 1 and 2.
+- Flow: `flows/f5a6e9/reports/flow-buildable-design.md` at e876d77d
+  (blob 138bcbd7), sections 1 and 2.
 
 From them: an Address written short, `{ Mind nexus Secondary }`; the send
 `Send.{ Recipient Request }`, Recipient being Flow's
@@ -44,7 +44,8 @@ Flow accepts Message's start Bind only from the executable that
 `Configure.Nexus`'s MessageNexusBinary names, and refuses it NotConfigured
 before any `Configure.Nexus`. So the frame starts Flow at boot, gives it the
 model of each layer and a `Configure.Nexus`, and only then starts Message. In
-that payload MessageNexusBinary is the message-nexus under test and
+that payload MessageNexusBinary is the message-nexus under test, a real file
+(Flow compares canonical paths, and the frame checks it resolves to a file), and
 MessageNexusPath the VM's Message ordinary socket; SourceRoot, StableCodex,
 NextCodex, HarnessProfiles and MetaAspects are VM-local fixture values that
 no pure scenario exercises, since none launches a flow, and Lease is 60.

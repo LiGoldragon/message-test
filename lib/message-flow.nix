@@ -89,6 +89,7 @@ pkgs.testers.runNixOSTest {
   testScript = ''
     NAME = "${name}"
     FORKS = "${builtins.concatStringsSep " " forks}"
+    MESSAGE_NEXUS = "${message.nexus}"
     ${builtins.readFile ./message-flow.py}
     ${script}
   '';

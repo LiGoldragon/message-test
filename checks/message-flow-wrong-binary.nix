@@ -1,6 +1,6 @@
 # Test 28. A message-nexus from another store path than the
 # MessageNexusBinary Flow holds (a copy of the same executable in its own
-# derivation) is started: Flow answers its Bind NotMessage, it exits nonzero
+# derivation, whose canonical path differs, as asserted) is started: Flow answers its Bind NotMessage, it exits nonzero
 # naming NotMessage, and no socket of it listens.
 # Forks, first option: F2.
 {
@@ -23,6 +23,10 @@ flake.lib.messageFlow { inherit pkgs flake system; } {
   script = ''
     start(flow_configured=False)
     configure_flow()
+    # Flow compares canonical paths, so the copy must resolve elsewhere.
+    copy = machine.succeed("readlink -f $(command -v message-nexus-other)").strip()
+    held = machine.succeed(f"readlink -f {MESSAGE_NEXUS}").strip()
+    assert copy != held, f"the copy resolves to the binary Flow holds: {copy}"
     status, out = run("RUST_LOG=debug timeout 30 message-nexus-other 2>&1")
     print(f"message-nexus-other: «{out}» (exit {status})")
     assert status != 0 and status != 124, f"message-nexus-other did not exit refused (exit {status})"

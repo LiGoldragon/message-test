@@ -50,6 +50,8 @@ FLOW_NEXUS = "/etc/message-test-flow-nexus.datom"
 # MessageNexusBinary names the message-nexus under test; Message's start Bind
 # is accepted only after it. Message is then started with no arguments.
 def configure_flow():
+    # Flow compares canonical paths; MessageNexusBinary must name a real file.
+    machine.succeed(f"test -f \"$(readlink -f {MESSAGE_NEXUS})\"")
     for layer in ["primary", "secondary", "tertiary", "quaternary"]:
         payload = f"{FIXTURES}/flow/model-{layer}.datom"
         expect(f"flow meta Configure {layer}", f'flow-meta "$(cat {payload})"', "Configured")
