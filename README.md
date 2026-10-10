@@ -114,7 +114,7 @@ Test unpushed code with `--override-input message path:<checkout>` or
 | 27 | message-flow-sender-ended | F6* F8 | the sender's metaflow Ended while its shell runs, then it sends | Refused.Ended.… naming the sender |
 | 28 | message-flow-wrong-binary | F2 | a message-nexus copied to another store path is started | nonzero exit naming NotMessage; nothing listens |
 | 29 | message-flow-not-configured | F2 F6* F8 | message-nexus started before Flow holds Configure.Nexus, then after it | nonzero exit, nothing listens, trace names NotConfigured; then a send is Delivered |
-| 31 | pending | F2 | Flow answers NotMessage to Message's Lock after its start Bind | Message answers the sender Refused.NotMessage and exits nonzero naming NotMessage. No route through Message alone: Flow answers NotMessage to a bound Message only when its executable changes, which needs a helper, or when MessageNexusBinary changes under it, and neither design says Flow takes a second Configure.Nexus |
+| 31 | covered by 28 | F2 | Flow answers NotMessage to Message's Lock after its start Bind | Covered by test 28: Message exits naming NotMessage when refused at Bind, together with flow-test's flow-lock-message-exec (the refusal after execve). A mid-run change of MessageNexusBinary is refused Conflict under Flow's design, so no message-test scenario reaches it. |
 | 22 | message-flow-claude | F1 F4 F6* F10 | Notice then Order to a Claude metaflow asleep after Stop | Queued, Woken; first prompt ends with the queue, Order last |
 | 23 | message-flow-claude | F1 F4 F6* F10 | Order to working Claude flow | placed by Flow's rule; transcript holds it once |
 
