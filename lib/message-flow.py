@@ -1,3 +1,4 @@
+# Herdr 0.8.0 reads a pane command's pane id first, its options after.
 # Helpers every message-flow scenario shares. Commands run as alice inside the
 # machine; a send runs `message` inside a Herdr pane, so the caller is a
 # descendant of that pane's shell, the process a scenario binds to a metaflow.
@@ -100,7 +101,7 @@ def expect_send_prefix(pane, datom, want):
 
 
 def pane_shows(pane, text):
-    status, out = run(f"herdr pane wait-output --match {shlex.quote(text)} --timeout 15000 {pane}")
+    status, out = run(f"herdr pane wait-output {pane} --match {shlex.quote(text)} --timeout 15000")
     assert status == 0, f"pane {pane} never showed «{text}»: {out}"
 
 

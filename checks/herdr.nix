@@ -48,6 +48,6 @@ pkgs.testers.runNixOSTest {
     pid = info["result"]["process_info"]["shell_pid"]
     assert int(pid) > 1, f"no shell pid for {pane}: {info}"
     alice(f"herdr pane run {pane} " + shlex.quote("echo rig-$HERDR_PANE_ID-$$"))
-    alice(f"herdr pane wait-output --match {shlex.quote(f'rig-{pane}-{pid}')} --timeout 15000 {pane}")
+    alice(f"herdr pane wait-output {pane} --match {shlex.quote(f'rig-{pane}-{pid}')} --timeout 15000")
   '';
 }
