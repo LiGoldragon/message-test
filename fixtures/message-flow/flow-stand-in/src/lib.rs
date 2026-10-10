@@ -33,14 +33,53 @@ fn answer(query: Query) -> io::Result<Response> {
     }
 }
 
-fn read_dispatch<R: Read>(reader: &mut R) -> io::Result<Dispatch<Query>> {
-    let frame = reader
+struct FirstByteReader<'a, R> {
+    first: Option<u8>,
+    inner: &'a mut R,
+}
+
+impl<R: Read> Read for FirstByteReader<'_, R> {
+    fn read(&mut self, buffer: &mut [u8]) -> io::Result<usize> {
+        if buffer.is_empty() {
+            return Ok(0);
+        }
+        if let Some(first) = self.first.take() {
+            buffer[0] = first;
+            return Ok(1);
+        }
+        self.inner.read(buffer)
+    }
+}
+
+fn read_dispatch<R: Read>(reader: &mut R) -> io::Result<Option<Dispatch<Query>>> {
+    let mut first = [0_u8; 1];
+    loop {
+        match reader.read(&mut first) {
+            Ok(0) => return Ok(None),
+            Ok(1) => break,
+            Ok(_) => {
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    "one-byte read returned more than one byte",
+                ));
+            }
+            Err(error) if error.kind() == io::ErrorKind::Interrupted => continue,
+            Err(error) => return Err(error),
+        }
+    }
+
+    let mut prefixed = FirstByteReader {
+        first: Some(first[0]),
+        inner: reader,
+    };
+    let frame = prefixed
         .read_frame(FrameCapacity::default())
         .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
     let bytes: Vec<u8> = frame.into();
-    Signal::<Dispatch<Query>>::from(bytes)
+    let dispatch = Signal::<Dispatch<Query>>::from(bytes)
         .restore()
-        .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))
+        .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
+    Ok(Some(dispatch))
 }
 
 fn write_delivery<W: Write>(writer: &mut W, delivery: &Delivery<Response>) -> io::Result<()> {
@@ -54,11 +93,14 @@ fn write_delivery<W: Write>(writer: &mut W, delivery: &Delivery<Response>) -> io
 
 /// Serve one typed Signal connection from greeting through its exchanges.
 pub fn serve_connection<S: Read + Write>(stream: &mut S) -> io::Result<()> {
-    let Dispatch::Greet(greeting) = read_dispatch(stream)? else {
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidData,
-            "flow stand-in expected the Signal greeting first",
-        ));
+    let greeting = match read_dispatch(stream)? {
+        Some(Dispatch::Greet(greeting)) => greeting,
+        Some(_) | None => {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "flow stand-in expected the Signal greeting first",
+            ));
+        }
     };
 
     let receipt = Query::receipt(&greeting);
@@ -74,10 +116,8 @@ pub fn serve_connection<S: Read + Write>(stream: &mut S) -> io::Result<()> {
         .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, format!("{error:?}")))?;
 
     loop {
-        let dispatch = match read_dispatch(stream) {
-            Ok(dispatch) => dispatch,
-            Err(error) if error.kind() == io::ErrorKind::UnexpectedEof => return Ok(()),
-            Err(error) => return Err(error),
+        let Some(dispatch) = read_dispatch(stream)? else {
+            return Ok(());
         };
 
         match dispatch {
@@ -114,7 +154,7 @@ pub fn serve_connection<S: Read + Write>(stream: &mut S) -> io::Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use std::{io, os::unix::net::UnixStream, thread};
+    use std::{io::{self, Write}, os::unix::net::UnixStream, thread};
 
     use flow_ethos::{Address, Aspect, Layer, Process, Recipient};
     use signal::{
@@ -230,5 +270,28 @@ mod tests {
             .join()
             .expect("stand-in thread joins")
             .expect("serve succeeds");
+    }
+
+    #[test]
+    fn rejects_a_truncated_frame_instead_of_treating_it_as_clean_close() {
+        let (mut client, mut server) = UnixStream::pair().expect("socket pair");
+        let serving = thread::spawn(move || serve_connection(&mut server));
+
+        assert_eq!(
+            request(&mut client, &Dispatch::Greet(Query::greeting()))
+                .expect("greeting round trip"),
+            Delivery::Greeted(HandshakeReceipt::Greeted(Query::contract_digest()))
+        );
+
+        client
+            .write_all(&[0, 0, 0, 2, 0x23])
+            .expect("write incomplete frame");
+        drop(client);
+
+        let error = serving
+            .join()
+            .expect("stand-in thread joins")
+            .expect_err("truncated frame must fail");
+        assert_eq!(error.kind(), io::ErrorKind::InvalidData);
     }
 }
