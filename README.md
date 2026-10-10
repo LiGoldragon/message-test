@@ -15,9 +15,10 @@ The scenarios are written to two designs in the Primary repository
 From them: an Address written short, `{ Mind nexus Secondary }`; the send
 `Send.{ Recipient.[ Address Up ] Request }`, written as the Message design
 writes it, `Send.{ { Mind nexus Secondary } Order.«…» }` or
-`Send.{ Up Result.«…» }`; Flow resolves `Up` and refuses `NoneAbove` at the
-top layer. On Flow: `Lock.Recipient`, written `Lock.{ Mind nexus Secondary }`
-as the Message design writes it, `Bind.{ Address Process }` with Process
+`Send.{ Up Result.«…» }`. On Flow: `Lock.Recipient`, the Address form
+written `Lock.{ Mind nexus Secondary }`; Flow resolves `Up` on the lock
+itself, answering `Locked.Lock` with the resolved Address or refusing
+`NoneAbove` at the top layer (f5a6e9's ruling; there is no ResolveUp); `Bind.{ Address Process }` with Process
 `{ Pid Started }`, `End.Address` and `Current.Address`. Where the Message design leaves a fork to the living (its section 12),
 each scenario is written against the fork's first option and names that fork
 in its header and in the `forks` it prints.
@@ -59,8 +60,8 @@ Test unpushed code with `--override-input message path:<checkout>` or
 | 5 | message-flow-off-route | F2 F6* F8 | Field Tertiary to Psyche Primary | Refused.OffRoute; lock released |
 | 6 | message-flow-same-layer | F4 F6* F8 F10 | Field Secondary to Mind Secondary | Delivered |
 | 7 | message-flow-above | F4 F6* F8 F10 | Mind Secondary to { Mind nexus Primary } | Delivered to Mind Primary |
-| 8 | message-flow-up | F4 F6* F7* F8 F10 | Up from Mind Secondary | trace Identified, ResolvedUp, Locked, Delivered; delivered to Mind Primary |
-| 9 | message-flow-none-above | F6* F7* F8 | Up from Mind Primary | Refused.NoneAbove; no Lock in the trace |
+| 8 | message-flow-up | F4 F6* F7* F8 F10 | Up from Mind Secondary | trace Identified, Locked, Delivered; delivered to Mind Primary |
+| 9 | message-flow-none-above | F6* F7* F8 | Up from Mind Primary | Flow refuses the lock; Refused.NoneAbove |
 | 10 | message-flow-unidentified | F6* F8 F11 | send from an unbound pane | Refused.Unidentified.… |
 | 11 | message-flow-held | F2 F3 F6* F8 | Lock taken directly, then send; clock past Until | Refused.Held.…, then Delivered |
 | 12 | message-flow-unreachable | F2 F6* | Flow stopped, then send | Refused.FlowUnreachable |
