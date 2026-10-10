@@ -90,12 +90,12 @@ def open_pane(label):
     return pane, pid
 
 
-# Bind.{ Address Process }: Process is the pid and the kernel's start time of
+# Bind.{ Address Process } on Flow's ordinary socket: Process is the pid and the kernel's start time of
 # that pid (field 22 of /proc/<pid>/stat, clock ticks since boot). Answered
 # Bound.FlowId; the flow id is returned.
 def bind(address, pid):
     started = started_of(pid)
-    bound_reply = expect_prefix(f"Bind {address}", f"flow-meta 'Bind.{{ {address} {{ {pid} {started} }} }}'", "Bound.")
+    bound_reply = expect_prefix(f"Bind {address}", f"flow 'Bind.{{ {address} {{ {pid} {started} }} }}'", "Bound.")
     return bound_reply[len("Bound."):]
 
 

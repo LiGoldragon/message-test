@@ -10,8 +10,8 @@ The scenarios are written to two designs in the Primary repository
 - Message: `flows/73ada7/reports/build/message-design.md` at 4dc4f864
   (blob 7112c6a6), sections 3 to 9; tests are numbered as its section 9
   numbers them.
-- Flow: `flows/f5a6e9/reports/flow-buildable-design.md` at 7398a43c
-  (blob ff8a60ce), sections 1 and 2.
+- Flow: `flows/f5a6e9/reports/flow-buildable-design.md` at 30e8efc4
+  (blob 4bad0825), sections 1 and 2.
 
 From them: an Address written short, `{ Mind nexus Secondary }`; the send
 `Send.{ Recipient Request }`, Recipient being Flow's
@@ -31,7 +31,8 @@ covered by flow-test. Message binds at its start with
 store with old Message, the `message-old` input pinned at 6fa4d0. Flow starts with `Start.{ OrdinarySocketPath MetaSocketPath }`.
 A datom String is written bare when it has no space, no delimiter glyph and
 does not begin or end with `.`, `!` or `:`; otherwise in guillemets. `Bind.{ Address
-Process }` with Process `{ Pid Started }`, answered `Bound.FlowId`;
+Process }` on Flow's ordinary socket, Process `{ Pid Started }`, answered
+`Bound.FlowId`;
 `Stop.FlowId` leaves the metaflow Asleep; `End.Address`, `Current.Address`
 and `Metaflows`. Flow's unknown refusals are one
 `Unknown.[ Address Lock FlowId Key ]`; no design writes their print, so they

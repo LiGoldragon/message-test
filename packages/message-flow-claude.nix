@@ -124,7 +124,7 @@ pkgs.writeShellApplication {
     bindPane() {
       pid="$(shellPid "$2")"
       started="$(cut -d' ' -f22 "/proc/$pid/stat")"
-      reply="$(flow-meta "Bind.{ $1 { $pid $started } }" 2>&1)" || true
+      reply="$(flow "Bind.{ $1 { $pid $started } }" 2>&1)" || true
       echo "Bind $1: «$reply»"
       case "$reply" in Bound.*) ;; *) return 1 ;; esac
     }
