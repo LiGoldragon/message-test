@@ -1,7 +1,8 @@
 # The frame of a pure message-flow scenario: one NixOS virtual machine with
 # user `alice` (uid 1000, lingering), and three of her user services: the
-# real Message Nexus started with no arguments, the real Flow Nexus started
-# with Start.{ ordinary meta } under her runtime directory, and a
+# real Flow Nexus started at boot with Start.{ ordinary meta } under her
+# runtime directory, the real Message Nexus started with no arguments by the
+# scenario once Flow holds Configure.Nexus, and a
 # headless Herdr server whose panes are plain shells. Both Nexuses are
 # configured by their meta clients from the payload files in
 # fixtures/message-flow; Message is restarted on its persisted configuration.
@@ -26,11 +27,24 @@ let
 
   # A user service of alice's running the given command line, tracing on.
   nexusService = executable: {
-    wantedBy = [ "default.target" ];
     unitConfig.ConditionUser = "alice";
     environment.RUST_LOG = "debug";
     serviceConfig.ExecStart = executable;
   };
+
+  # Flow's Configure.Nexus for the VM. MessageNexusBinary is the
+  # message-nexus under test; every other field is a VM-local fixture value
+  # that no pure scenario exercises (no pure scenario launches a flow).
+  flowNexus = ''
+    Configure.Nexus.{ /home/alice/source
+                      { /home/alice/codex/stable/codex /home/alice/codex/stable /run/user/1000/codex/stable.sock [ luna ] }
+                      { /home/alice/codex/next/codex /home/alice/codex/next /run/user/1000/codex/next.sock [ luna ] }
+                      [ { Codex [ / ] [ Escape ] [ Enter ] } { Claude [ / ] [ Escape ] [ Enter ] } ]
+                      [ Field ]
+                      /run/user/1000/${message.ordinarySocket}
+                      ${message.nexus}
+                      60 }
+  '';
 in
 pkgs.testers.runNixOSTest {
   inherit name;
@@ -53,11 +67,15 @@ pkgs.testers.runNixOSTest {
     ];
 
     environment.etc."message-test".source = ../fixtures/message-flow;
+    environment.etc."message-test-flow-nexus.datom".text = flowNexus;
 
     systemd.user.services = {
       message-nexus = nexusService message.nexus;
       # Flow's sockets come only from its start command.
-      flow-nexus = nexusService "${flow.nexus} \"Start.{ /run/user/1000/${flow.ordinarySocket} /run/user/1000/${flow.metaSocket} }\"";
+      flow-nexus = {
+        wantedBy = [ "default.target" ];
+      }
+      // nexusService "${flow.nexus} \"Start.{ /run/user/1000/${flow.ordinarySocket} /run/user/1000/${flow.metaSocket} }\"";
       herdr = {
         wantedBy = [ "default.target" ];
         unitConfig.ConditionUser = "alice";

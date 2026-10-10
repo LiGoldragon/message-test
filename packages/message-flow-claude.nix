@@ -6,11 +6,10 @@
 #
 # A fresh short root (removed in an exit trap) holds HOME and
 # XDG_RUNTIME_DIR; only ~/.claude/.credentials.json is copied in. A headless
-# Herdr server and message-nexus start on that root with no arguments, and
-# flow-nexus with Start.{ ordinary meta }, its sockets under the root; each
-# client reaches its Nexus at the defaults they share.
-# Message's meta client persists the root's sockets and Message is restarted
-# on them; Flow is given the model of every layer.
+# Herdr server and flow-nexus, started with Start.{ ordinary meta }, run on
+# that root. Flow is given the model of every layer and Configure.Nexus;
+# then message-nexus starts with no arguments, its meta client persists the
+# root's sockets, and Message is restarted on them.
 #
 # 22. Forks, first option: F1, F4, F10; F6 no tiers,
 #     per design. A Notice, then an Order, to an
@@ -89,8 +88,6 @@ pkgs.writeShellApplication {
     # Flow's sockets come from its start command.
     RUST_LOG=debug ${flow.nexus} "Start.{ $(string "$XDG_RUNTIME_DIR/${flow.ordinarySocket}") $(string "$XDG_RUNTIME_DIR/${flow.metaSocket}") }" 2> "$root/flow-nexus.log" &
     pids+=($!)
-    RUST_LOG=debug ${message.nexus} 2> "$root/message-nexus.log" &
-    pids+=($!)
 
     for _ in $(seq 1 100); do herdr workspace list > /dev/null 2>&1 && break; sleep 0.1; done
 
@@ -142,35 +139,21 @@ pkgs.writeShellApplication {
       find "$HOME/.claude/projects" -name '*.jsonl' -printf '%T@ %p\n' 2>/dev/null | sort -n | tail -1 | cut -d' ' -f2-
     }
 
-    # Message persists its payload, answers Configured or RestartRequired, and
-    # is restarted with no arguments on its store.
-    for _ in $(seq 1 100); do
-      configured="$(timeout 30 message-meta "${message.configuration "$XDG_RUNTIME_DIR"}" 2>&1)" || true
-      case "$configured" in Configured | RestartRequired) break ;; esac
-      sleep 0.1
-    done
-    echo "message meta Configure: «$configured»"
-    case "$configured" in Configured | RestartRequired) ;; *) exit 1 ;; esac
-    kill "''${pids[2]}"
-    wait "''${pids[2]}" 2>/dev/null || true
-    RUST_LOG=debug ${message.nexus} 2>> "$root/message-nexus.log" &
-    pids[2]=$!
-    for socket in ${message.ordinarySocket} ${message.metaSocket} ${flow.ordinarySocket}; do
-      bound "$XDG_RUNTIME_DIR/$socket" || exit 1
-    done
+    bound "$XDG_RUNTIME_DIR/${flow.ordinarySocket}" || exit 1
     for layer in Primary Secondary Tertiary Quaternary; do
       expect "flow meta Configure $layer" Configured flow-meta "Configure.Model.{ $layer $model }"
     done
 
-    # Launch needs Configure.Nexus. Its values differ between setups, so they
+    # Launch and Message's start Bind need Configure.Nexus. Its values differ between setups, so they
     # are skill variables, read at run time from the file
     # MESSAGE_TEST_SKILL_VARIABLES names (one `Name: value` per line, a list
     # space-separated). StableCodex and NextCodex are CodexEndpoint, and
     # HarnessProfiles a Vector<HarnessProfile> with one profile per
     # HarnessKind, as meta-signal-flow declares them at the revision Flow
     # 0.25.0 pins (88f37592); MetaAspects is aspect names. MessageNexusPath is
-    # this sandbox's own Message ordinary socket; Lease takes the design's
-    # default, 60 seconds. A missing variable stops the run before any Launch.
+    # this sandbox's own Message ordinary socket and MessageNexusBinary the
+    # message-nexus under test; Lease takes the design's default, 60 seconds.
+    # A missing variable stops the run before Message starts.
     variables="''${MESSAGE_TEST_SKILL_VARIABLES:-}"
     if [ ! -s "$variables" ]; then
       echo "message-flow-claude: set MESSAGE_TEST_SKILL_VARIABLES to the skill variables file" >&2
@@ -193,7 +176,7 @@ pkgs.writeShellApplication {
       skill-variable "$variables" "$name" > /dev/null || missing+=("$name")
     done
     if [ "''${#missing[@]}" -gt 0 ]; then
-      printf 'message-flow-claude: no skill variable «%s»; stopped before Launch\n' "''${missing[@]}" >&2
+      printf 'message-flow-claude: no skill variable «%s»; stopped before Message starts\n' "''${missing[@]}" >&2
       exit 1
     fi
     variable() { skill-variable "$variables" "$1"; }
@@ -222,8 +205,31 @@ pkgs.writeShellApplication {
     nexus="$nexus $(endpoint stable) $(endpoint next)"
     nexus="$nexus [ $(profile Codex) $(profile Claude) ]"
     nexus="$nexus [ $(variable "Flow meta aspects") ]"
-    nexus="$nexus $(string "$XDG_RUNTIME_DIR/${message.ordinarySocket}") 60 }"
+    nexus="$nexus $(string "$XDG_RUNTIME_DIR/${message.ordinarySocket}")"
+    nexus="$nexus $(string "${message.nexus}") 60 }"
     expect "flow meta Configure Nexus" Configured flow-meta "$nexus"
+
+    # Message starts only after Flow holds Configure.Nexus: its start Bind is
+    # accepted only from the executable MessageNexusBinary names.
+    RUST_LOG=debug ${message.nexus} 2> "$root/message-nexus.log" &
+    pids+=($!)
+    # Message persists its payload, answers Configured or RestartRequired, and
+    # is restarted with no arguments on its store.
+    for _ in $(seq 1 100); do
+      configured="$(timeout 30 message-meta "${message.configuration "$XDG_RUNTIME_DIR"}" 2>&1)" || true
+      case "$configured" in Configured | RestartRequired) break ;; esac
+      sleep 0.1
+    done
+    echo "message meta Configure: «$configured»"
+    case "$configured" in Configured | RestartRequired) ;; *) exit 1 ;; esac
+    kill "''${pids[2]}"
+    wait "''${pids[2]}" 2>/dev/null || true
+    RUST_LOG=debug ${message.nexus} 2>> "$root/message-nexus.log" &
+    pids[2]=$!
+    for socket in ${message.ordinarySocket} ${message.metaSocket}; do
+      bound "$XDG_RUNTIME_DIR/$socket" || exit 1
+    done
+
 
     test22() {
       sender="$(openPane psyche-wake)"

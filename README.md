@@ -36,9 +36,18 @@ Process }` on Flow's ordinary socket, Process `{ Pid Started }`, answered
 `Stop.FlowId` leaves the metaflow Asleep; `End.Address`, `Current.Address`
 and `Metaflows`. Flow's unknown refusals are one
 `Unknown.[ Address Lock FlowId Key ]`; no design writes their print, so they
-are matched by their head. Flow's sockets come from its start command; the
-pure checks give it only the model of each layer and no `Configure.Nexus`,
-which only Launch needs, so its lease is the 60 second default.
+are matched by their head. Flow's sockets come from its start command.
+
+Flow accepts Message's start Bind only from the executable that
+`Configure.Nexus`'s MessageNexusBinary names, and refuses it NotConfigured
+before any `Configure.Nexus`. So the frame starts Flow at boot, gives it the
+model of each layer and a `Configure.Nexus`, and only then starts Message. In
+that payload MessageNexusBinary is the message-nexus under test and
+MessageNexusPath the VM's Message ordinary socket; SourceRoot, StableCodex,
+NextCodex, HarnessProfiles and MetaAspects are VM-local fixture values that
+no pure scenario exercises, since none launches a flow, and Lease is 60.
+Nothing in it comes from the living's setup. The two unnumbered rows are
+f5a6e9's rulings, not yet rows of the Message design.
 
 Where the Message design leaves a fork to the living (its section 12), each
 scenario is written against the fork's first option and names that fork
@@ -97,6 +106,8 @@ Test unpushed code with `--override-input message path:<checkout>` or
 | 19 | message-flow-rebind | F2 F6* F8 | message-nexus killed, started again | Flow's trace shows the Bind answered Bound; a send succeeds |
 | 20 | message-flow-marker | F2 | fresh store: ordinary Configure, meta Configure moving a socket, ordinary Configure | Configured, RestartRequired, Refused.AlreadyConfigured |
 | 21 | message-flow-old-store | F14 | old Message's version-1 store at the store path | start refused, trace names the path, store checksum unchanged |
+| — | message-flow-not-configured | F2 | message-nexus started before Flow holds Configure.Nexus | nonzero exit, nothing listens, trace names NotConfigured |
+| — | pending | F8 | a send from a metaflow whose flow is Asleep | Refused.Asleep. Stop reaps the sender's process, so no live process of an asleep metaflow can send |
 | 22 | message-flow-claude | F1 F4 F6* F10 | Notice then Order to a Claude metaflow asleep after Stop | Queued, Woken; first prompt ends with the queue, Order last |
 | 23 | message-flow-claude | F1 F4 F6* F10 | Order to working Claude flow | placed by Flow's rule; transcript holds it once |
 

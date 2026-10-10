@@ -43,13 +43,31 @@ def listening(executable):
     machine.wait_until_succeeds(f"ss -xlpn | grep -q '\"{executable}\"'", timeout=60)
 
 
-def start():
+FLOW_NEXUS = "/etc/message-test-flow-nexus.datom"
+
+
+# Flow, at boot, takes the model of every layer and Configure.Nexus, whose
+# MessageNexusBinary names the message-nexus under test; Message's start Bind
+# is accepted only after it. Message is then started with no arguments.
+def configure_flow():
+    for layer in ["primary", "secondary", "tertiary", "quaternary"]:
+        payload = f"{FIXTURES}/flow/model-{layer}.datom"
+        expect(f"flow meta Configure {layer}", f'flow-meta "$(cat {payload})"', "Configured")
+    expect("flow meta Configure Nexus", f'flow-meta "$(cat {FLOW_NEXUS})"', "Configured")
+
+
+def start(flow_configured=True):
     machine.wait_for_unit("user@1000.service")
-    for unit in ["message-nexus.service", "flow-nexus.service", "herdr.service"]:
+    for unit in ["flow-nexus.service", "herdr.service"]:
         machine.wait_for_unit(unit, user="alice")
     machine.wait_until_succeeds(as_alice("herdr workspace list"), timeout=60)
-    listening("message-nexus")
     listening("flow-nexus")
+    if not flow_configured:
+        return
+    configure_flow()
+    status, out = run("systemctl --user start message-nexus.service")
+    assert status == 0, f"starting message-nexus: {out}"
+    listening("message-nexus")
 
 
 # A socket counts as bound when a process listens on it, so a socket file
@@ -63,8 +81,7 @@ def bound(socket):
 # Message's payload is persisted by its meta client, answered Configured, or
 # RestartRequired when a socket path changed. Message is then restarted with
 # no arguments, so it serves from the store whatever it answered, and the
-# sockets the payload names must be bound. Flow's model payloads change no
-# socket.
+# sockets the payload names must be bound.
 def configure():
     payload = f"{FIXTURES}/message.datom"
     status, got = run(f'message-meta "$(cat {payload})"')
@@ -74,9 +91,6 @@ def configure():
     assert status == 0, f"restarting message-nexus: {out}"
     for socket in machine.succeed(f"cat {payload}").split()[1:4]:
         bound(socket.strip("{}"))
-    for layer in ["primary", "secondary", "tertiary", "quaternary"]:
-        payload = f"{FIXTURES}/flow/model-{layer}.datom"
-        expect(f"flow meta Configure {layer}", f'flow-meta "$(cat {payload})"', "Configured")
 
 
 def open_pane(label):
