@@ -1,0 +1,10 @@
+[package]
+name = "flow-stand-in"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+signal = { git = "https://github.com/LiGoldragon/signal", rev = "e0e3c05573405e793037205640e54cfd769bb1b4", default-features = false }
+signal-flow = { git = "https://github.com/LiGoldragon/signal-flow", rev = "a991c1499b201ad75a084a6542d2f110c46720ce", default-features = false }
+flow-ethos = { git = "https://github.com/LiGoldragon/flow", rev = "a3173348498ecce704359dd42abaea763c09705b", default-features = false }
