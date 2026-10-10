@@ -7,8 +7,8 @@ flake inputs whose `nixpkgs` follows this flake's.
 The scenarios are written to two designs in the Primary repository
 (github:LiGoldragon/primary):
 
-- Message: `flows/73ada7/reports/build/message-design.md` at 23d2c4c8
-  (blob 24fee3c0), sections 3 to 9; tests are numbered as its section 9
+- Message: `flows/73ada7/reports/build/message-design.md` at be5c2e5b
+  (blob e3ea9872), sections 3 to 9; tests are numbered as its section 9
   numbers them.
 - Flow: `flows/f5a6e9/reports/flow-buildable-design.md` at c82223e9
   (blob 987e1bb8), sections 1 and 2.
@@ -76,8 +76,8 @@ Test unpushed code with `--override-input message path:<checkout>` or
     lib/message-flow.nix            the frame of a pure scenario: one VM, three user services
     lib/message-flow.py             the frame's helpers: configure, panes, Bind, send, trace
     checks/herdr.nix                the rig: headless Herdr in the VM
-    checks/message-flow-*.nix       tests 1-21 and 24-29, one per file;
-                                    11, 24, 25 pending; 26 in flow-test
+    checks/message-flow-*.nix       tests 1-21 and 24-30, one per file;
+                                    11, 24, 25, 30 pending; 26 in flow-test
     packages/message-flow-claude.nix tests 22 and 23, semi-sandbox
     fixtures/message-flow/          the meta Configure payloads
     lib/skill-variable.nix          the runner's skill-variable reader
@@ -114,6 +114,7 @@ Test unpushed code with `--override-input message path:<checkout>` or
 | 27 | message-flow-sender-ended | F6* F8 | the sender's metaflow Ended while its shell runs, then it sends | Refused.Ended.… naming the sender |
 | 28 | message-flow-wrong-binary | F2 | a message-nexus copied to another store path is started | nonzero exit naming NotMessage; nothing listens |
 | 29 | message-flow-not-configured | F2 F6* F8 | message-nexus started before Flow holds Configure.Nexus, then after it | nonzero exit, nothing listens, trace names NotConfigured; then a send is Delivered |
+| 30 | pending | F2 | the bound Message process replaced in place by another binary through execve, then Lock | Refused.NotMessage, binding dropped. Only a debugger injected into message-nexus or a modified Message could make it execve; no design gives either |
 | 22 | message-flow-claude | F1 F4 F6* F10 | Notice then Order to a Claude metaflow asleep after Stop | Queued, Woken; first prompt ends with the queue, Order last |
 | 23 | message-flow-claude | F1 F4 F6* F10 | Order to working Claude flow | placed by Flow's rule; transcript holds it once |
 

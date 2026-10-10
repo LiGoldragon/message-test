@@ -2,7 +2,7 @@
 # from the `message` input. The Nexus starts with no arguments; its default
 # configuration is relative to XDG_RUNTIME_DIR (sockets) and HOME (store),
 # and its clients read the same defaults. Every path below is the Message
-# design's at Primary 23d2c4c8 (blob 24fee3c0), flows/73ada7/reports/build/message-design.md,
+# design's at Primary be5c2e5b (blob e3ea9872), flows/73ada7/reports/build/message-design.md,
 # section 3.
 { inputs }:
 {
