@@ -1,0 +1,3 @@
+Configure.{ /run/user/1000/message/message.sock
+            /run/user/1000/message/message-meta.sock
+            /run/user/1000/flow/flow.sock }

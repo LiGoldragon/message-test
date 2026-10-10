@@ -1,0 +1,180 @@
+# message-flow-claude — semi-sandbox: tests 15 and 16 of the Message design,
+# with real Claude Code flows on the cheapest model, launched by the real
+# Flow Nexus, sent to by the real Message Nexus. It needs the living's Claude
+# login and the network, so it is a runner, never a check, and it refuses to
+# run unless MESSAGE_TEST_LIVE=1 is set.
+#
+# A fresh short root (removed in an exit trap) holds HOME and
+# XDG_RUNTIME_DIR; only ~/.claude/.credentials.json is copied in. A headless
+# Herdr server, flow-nexus and message-nexus start on that root with no
+# arguments and are configured by their meta clients: Message with the
+# root's sockets, Flow with the model of every layer.
+#
+# 15. Forks, first option: F1, F4, F6, F10. A Notice, then an Order, to an
+#     asleep Mind.{ wake Secondary } (launched, then its pane closed): `Queued`,
+#     then `Woken`; the woken flow's first prompt ends with
+#     `[ Notice.«…» Order.«…» ]`, the Order last.
+# 16. Forks, first option: F1, F4, F6, F10. An Order to the awake, working
+#     Mind.{ busy Secondary }: placed by Flow's rule (`Delivered` or `Queued`);
+#     the recipient's transcript holds the Order exactly once.
+{
+  pkgs,
+  flake,
+  system,
+  ...
+}:
+let
+  message = flake.lib.components.message.forSystem system;
+  flow = flake.lib.components.flow.forSystem system;
+  herdr = flake.lib.components.herdr.forPkgs pkgs;
+in
+pkgs.writeShellApplication {
+  name = "message-flow-claude";
+
+  runtimeInputs = [
+    pkgs.coreutils
+    pkgs.findutils
+    pkgs.gnugrep
+    pkgs.jq
+    message.package
+    flow.package
+    herdr.package
+  ];
+
+  meta.description = "Tests 15 and 16 of the Message design: Claude Code flows woken and reached through Message and Flow (needs MESSAGE_TEST_LIVE=1).";
+
+  text = ''
+    if [ "''${MESSAGE_TEST_LIVE:-}" != 1 ]; then
+      echo "message-flow-claude: needs the living's Claude login and the network; set MESSAGE_TEST_LIVE=1 to run it" >&2
+      exit 2
+    fi
+
+    model="''${MESSAGE_TEST_MODEL:-${flake.lib.cheapestModel.claude}}"
+    credentials="$HOME/.claude/.credentials.json"
+    if [ ! -s "$credentials" ]; then
+      echo "message-flow-claude: no Claude login at $credentials" >&2
+      exit 1
+    fi
+
+    # A short root: sun_path holds 108 bytes.
+    root="$(mktemp -d /tmp/mt-XXXXXXXX)"
+    pids=()
+    trap 'for pid in "''${pids[@]}"; do kill "$pid" 2>/dev/null || true; done; herdr server stop >/dev/null 2>&1 || true; rm -rf "$root"' EXIT
+
+    export HOME="$root/home" XDG_RUNTIME_DIR="$root/run"
+    mkdir -p "$HOME/.claude" "$XDG_RUNTIME_DIR"
+    chmod 700 "$XDG_RUNTIME_DIR"
+    cp "$credentials" "$HOME/.claude/.credentials.json"
+    SHELL="${pkgs.bashInteractive}/bin/bash" herdr server > "$root/herdr.log" 2>&1 &
+    pids+=($!)
+    RUST_LOG=debug ${flow.nexus} 2> "$root/flow-nexus.log" &
+    pids+=($!)
+    RUST_LOG=debug ${message.nexus} 2> "$root/message-nexus.log" &
+    pids+=($!)
+
+    for socket in ${message.ordinarySocket} ${message.metaSocket} ${flow.ordinarySocket} ${flow.metaSocket}; do
+      for _ in $(seq 1 100); do
+        [ -S "$XDG_RUNTIME_DIR/$socket" ] && break
+        sleep 0.1
+      done
+      [ -S "$XDG_RUNTIME_DIR/$socket" ] || { echo "message-flow-claude: $socket never bound" >&2; exit 1; }
+    done
+    for _ in $(seq 1 100); do herdr workspace list > /dev/null 2>&1 && break; sleep 0.1; done
+
+    # expect <label> <reply> <command...>: the whole stdout must equal <reply>.
+    expect() {
+      label="$1" want="$2"
+      shift 2
+      got="$(timeout 30 "$@" 2>&1)" || true
+      echo "$label: «$got»"
+      [ "$got" = "$want" ] || { echo "$label: expected «$want»" >&2; return 1; }
+    }
+
+    openPane() {
+      herdr workspace create --cwd "$HOME" --label "$1" --no-focus | jq -r .result.root_pane.pane_id
+    }
+    shellPid() {
+      herdr pane process-info --pane "$1" | jq -r .result.process_info.shell_pid
+    }
+    # bindPane <metaflow> <pane>: binds the pane's shell to the metaflow.
+    bindPane() {
+      reply="$(flow-meta "Bind.{ $1 $(shellPid "$2") }" 2>&1)" || true
+      echo "Bind $1: «$reply»"
+      case "$reply" in Bound.*) ;; *) return 1 ;; esac
+    }
+    # sendFrom <pane> <datom>: runs `message` inside the pane, prints its reply.
+    sends=0
+    sendFrom() {
+      sends=$((sends + 1))
+      out="$root/send-$sends"
+      herdr pane run "$1" "message '$2' > $out.reply 2>&1; echo \$? > $out.code" > /dev/null
+      for _ in $(seq 1 600); do [ -s "$out.code" ] && break; sleep 0.1; done
+      cat "$out.reply"
+    }
+    # transcriptOf: the newest Claude transcript under the root.
+    transcriptOf() {
+      find "$HOME/.claude/projects" -name '*.jsonl' -printf '%T@ %p\n' 2>/dev/null | sort -n | tail -1 | cut -d' ' -f2-
+    }
+
+    expect "message meta Configure" Configured \
+      message-meta "${message.configuration "$XDG_RUNTIME_DIR"}"
+    for layer in Primary Secondary Tertiary Quaternary; do
+      expect "flow meta Configure $layer" Configured flow-meta "Configure.Model.{ $layer $model }"
+    done
+
+    test15() {
+      sender="$(openPane psyche-wake)"
+      bindPane 'Psyche.{ wake Secondary }' "$sender"
+      launched="$(flow 'Launch.{ Mind.{ wake Secondary } [ ] «Reply with the word ok, then stop.» }')"
+      echo "Launch: «$launched»"
+      case "$launched" in Launched.*) ;; *) return 1 ;; esac
+      recipient="$(herdr pane list | jq -r --arg s "$sender" '.result.panes[] | select(.pane_id != $s) | .pane_id' | tail -1)"
+      herdr pane close "$recipient"
+      expect "Current before" Current.Asleep flow 'Current.Mind.{ wake Secondary }'
+      reply="$(sendFrom "$sender" 'Send.{ To.Mind.{ wake Secondary } Soft.Notice.«mfWake branch merged» }')"
+      [ "$reply" = Queued ] || { echo "Notice: «$reply», expected «Queued»" >&2; return 1; }
+      reply="$(sendFrom "$sender" 'Send.{ To.Mind.{ wake Secondary } Soft.Order.«mfWake reply ok» }')"
+      [ "$reply" = Woken ] || { echo "Order: «$reply», expected «Woken»" >&2; return 1; }
+      for _ in $(seq 1 600); do
+        transcript="$(transcriptOf)"
+        [ -n "$transcript" ] && grep -q mfWake "$transcript" && break
+        sleep 0.5
+      done
+      first="$(jq -rs '[.[] | select(.type == "user")][0].message.content | if type == "string" then . else map(.text // "") | join("") end' "$transcript")"
+      echo "first prompt ends: «''${first: -120}»"
+      case "$first" in
+        *'[ Notice.«mfWake branch merged» Order.«mfWake reply ok» ]') ;;
+        *) echo "the woken flow's first prompt does not end with the drained queue, the Order last" >&2; return 1 ;;
+      esac
+    }
+
+    test16() {
+      sender="$(openPane psyche-busy)"
+      bindPane 'Psyche.{ busy Secondary }' "$sender"
+      launched="$(flow 'Launch.{ Mind.{ busy Secondary } [ ] «Run the shell command sleep 30, then reply done.» }')"
+      echo "Launch: «$launched»"
+      case "$launched" in Launched.*) ;; *) return 1 ;; esac
+      for _ in $(seq 1 600); do
+        transcript="$(transcriptOf)"
+        [ -n "$transcript" ] && grep -q '"tool_use"' "$transcript" && break
+        sleep 0.5
+      done
+      reply="$(sendFrom "$sender" 'Send.{ To.Mind.{ busy Secondary } Soft.Order.«mfBusy reply received» }')"
+      case "$reply" in Delivered | Queued) ;; *) echo "Order: «$reply»" >&2; return 1 ;; esac
+      for _ in $(seq 1 1200); do grep -q mfBusy "$transcript" && break; sleep 0.5; done
+      count="$(jq -s '[.[] | select(.type == "user") | tostring | select(test("mfBusy"))] | length' "$transcript")"
+      echo "transcript holds the Order $count times"
+      [ "$count" = 1 ]
+    }
+
+    failed=0
+    for name in test15 test16; do
+      set +e
+      ( set -e; "$name" )
+      code=$?
+      set -e
+      if [ "$code" = 0 ]; then echo "$name: PASS"; else echo "$name: FAIL"; failed=1; fi
+    done
+    exit "$failed"
+  '';
+}
