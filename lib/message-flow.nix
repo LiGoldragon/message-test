@@ -58,16 +58,17 @@ pkgs.testers.runNixOSTest {
       linger = true;
     };
 
-    environment.systemPackages = packages ++ [
-      message.package
-      flow.package
-      herdr.package
-      pkgs.iproute2
-      pkgs.jq
-    ];
-
-    environment.etc."message-test".source = ../fixtures/message-flow;
-    environment.etc."message-test-flow-nexus.datom".text = flowNexus;
+    environment = {
+      systemPackages = packages ++ [
+        message.package
+        flow.package
+        herdr.package
+        pkgs.iproute2
+        pkgs.jq
+      ];
+      etc."message-test".source = ../fixtures/message-flow;
+      etc."message-test-flow-nexus.datom".text = flowNexus;
+    };
 
     systemd.user.services = {
       message-nexus = nexusService message.nexus;
