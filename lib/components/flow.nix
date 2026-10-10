@@ -1,7 +1,7 @@
 # Flow: the Flow Nexus and its `flow` / `flow-meta` clients, taken from the
 # `flow` input. The Nexus starts with Start.{ ordinary meta }, the sockets
-# its clients reach by default. Requests are Flow's design at Primary c82223e9,
-# flows/f5a6e9/reports/flow-buildable-design.md (blob 987e1bb8): Lock,
+# its clients reach by default. Requests are Flow's design at Primary 9b006dd2,
+# flows/f5a6e9/reports/flow-buildable-design.md (blob c443d8a8): Lock,
 # Identify, Deliver, Release, Bind, Current, End, Stop and Metaflows on the
 # flow socket; Configure and Configuration on the meta socket.
 { inputs }:
@@ -21,7 +21,10 @@
     # where Flow's clients look by default.
     metaSocket = "flow/flow-meta.sock";
 
-    # One meta Configure payload per layer: the layer's model.
-    modelPayload = layer: model: "Configure.Model.{ ${layer} ${model} }";
+    # One meta Configure payload per layer: the layer, the HarnessKind that
+    # drives its model, and the model's native name.
+    modelPayload =
+      layer: harness: model:
+      "Configure.Model.{ ${layer} ${harness} ${model} }";
   };
 }

@@ -141,7 +141,7 @@ pkgs.writeShellApplication {
 
     bound "$XDG_RUNTIME_DIR/${flow.ordinarySocket}" || exit 1
     for layer in Primary Secondary Tertiary Quaternary; do
-      expect "flow meta Configure $layer" Configured flow-meta "Configure.Model.{ $layer $model }"
+      expect "flow meta Configure $layer" Configured flow-meta "Configure.Model.{ $layer Claude $model }"
     done
 
     # Launch and Message's start Bind need Configure.Nexus. Its values differ between setups, so they

@@ -10,8 +10,8 @@ The scenarios are written to two designs in the Primary repository
 - Message: `flows/73ada7/reports/build/message-design.md` at be5c2e5b
   (blob e3ea9872), sections 3 to 9; tests are numbered as its section 9
   numbers them.
-- Flow: `flows/f5a6e9/reports/flow-buildable-design.md` at c82223e9
-  (blob 987e1bb8), sections 1 and 2.
+- Flow: `flows/f5a6e9/reports/flow-buildable-design.md` at 9b006dd2
+  (blob c443d8a8), sections 1 and 2.
 
 From them: an Address written short, `{ Mind nexus Secondary }`; the send
 `Send.{ Recipient Request }`, Recipient being Flow's
@@ -77,7 +77,7 @@ Test unpushed code with `--override-input message path:<checkout>` or
     lib/message-flow.py             the frame's helpers: configure, panes, Bind, send, trace
     checks/herdr.nix                the rig: headless Herdr in the VM
     checks/message-flow-*.nix       tests 1-21 and 24-30, one per file;
-                                    11, 24, 25, 30 pending; 26 in flow-test
+                                    11, 25, 30 pending; 26 in flow-test
     packages/message-flow-claude.nix tests 22 and 23, semi-sandbox
     fixtures/message-flow/          the meta Configure payloads
     lib/skill-variable.nix          the runner's skill-variable reader
@@ -109,7 +109,7 @@ Test unpushed code with `--override-input message path:<checkout>` or
 | 19 | message-flow-rebind | F2 F6* F8 | message-nexus killed, started again | Flow's trace shows the Bind answered Bound; a send succeeds |
 | 20 | message-flow-marker | F2 | fresh store: ordinary Configure, meta Configure moving a socket, ordinary Configure | Configured, RestartRequired, Refused.AlreadyConfigured |
 | 21 | message-flow-old-store | F14 | old Message's version-1 store at the store path | start refused, trace names the path, store checksum unchanged |
-| 24 | pending | — | pid reuse during a paused caller read | a ptrace (PTRACE_SYSCALL) or seccomp user-notify supervisor pauses the unmodified binary at the SO_PEERCRED / /proc stat / pidfd_send_signal syscalls and clone3 set_tid forces the reuse, so no Message change is needed; but the pinned message-nexus 0.19.1 runs no section-6 guard, so nothing exists to pause — needs a message-nexus built to section 6 |
+| 24 | message-flow-reaped | F6* F8 | message-nexus stopped by SIGSTOP; a client connects, sends, is killed and reaped by its shell; SIGCONT | Message's trace names ESRCH; no Identify and no Lock in Flow's trace; the recipient's pane lacks the request; then an unbound pane's send puts an Identify in Flow's trace. Witnesses the ESRCH path on a kernel of 6.16 or later, not a pid reuse; fails against the pinned message-nexus 0.19.1, which runs no section-6 guard |
 | 25 | pending | F8 | sender's metaflow has no Flow record at Lock | Refused.Unknown.Address naming the sender. Needs a Flow stand-in that emits Identified.Address then Refused.Unknown.Address on Flow's design ordinary wire; that wire (Bind, Lock, Identify, Deliver, Release and the design refusals) is in no published signal-flow — the pinned flow builds signal-flow 11.0.0 (068f0ea) whose Query carries only the 0.25.0 operations — so it cannot be emitted without inventing a contract |
 | 27 | message-flow-sender-ended | F6* F8 | the sender's metaflow Ended while its shell runs, then it sends | Refused.Ended.… naming the sender |
 | 28 | message-flow-wrong-binary | F2 | a message-nexus copied to another store path is started | nonzero exit naming NotMessage; nothing listens |
