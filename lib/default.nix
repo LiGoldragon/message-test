@@ -12,6 +12,9 @@
   # `flake.lib.messageFlow { pkgs, flake, system } { name, forks, script }`.
   messageFlow = import ./message-flow.nix;
 
+  # The skill-variable reader: `flake.lib.skillVariable { pkgs }`.
+  skillVariable = import ./skill-variable.nix;
+
   # The cheapest model per harness, the semi-sandbox default.
   cheapestModel = {
     claude = "haiku";

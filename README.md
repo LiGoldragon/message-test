@@ -59,6 +59,8 @@ Test unpushed code with `--override-input message path:<checkout>` or
     checks/message-flow-*.nix       tests 1 to 20, one per file, 18 pending
     packages/message-flow-claude.nix tests 21 and 22, semi-sandbox
     fixtures/message-flow/          the meta Configure payloads
+    lib/skill-variable.nix          the runner's skill-variable reader
+    checks/skill-variable.nix       the reader over a sample file
     checks/lint.nix, formatter.nix  style gate
 
 ## Scenarios
@@ -99,15 +101,33 @@ F7*: Flow resolves Up, per design.
     MESSAGE_TEST_LIVE=1 MESSAGE_TEST_SKILL_VARIABLES=<skill variables file> \
       nix run .#message-flow-claude
 
-The semi-sandbox launches flows, and Launch needs Flow's `Configure.Nexus`.
-The runner reads its fields at run time from the skill variables file
-(`Name: value` lines) and stops before any Launch, naming each one missing:
+The semi-sandbox starts Flow with `Start.{ ordinary meta }`, its sockets
+under the sandbox root, and launches flows; Launch needs Flow's
+`Configure.Nexus`. The runner reads its fields at run time from the skill
+variables file (`Name: value` lines, a list space-separated), builds each
+value whole, and stops before any Launch, naming each variable missing.
+CodexEndpoint and HarnessProfile are meta-signal-flow's at 88f37592, the
+revision Flow 0.25.0 pins.
 
-- `Flow source root`: SourceRoot
-- `Flow stable Codex`: StableCodex
-- `Flow next Codex`: NextCodex
-- `Flow harness profiles`: HarnessProfiles, space-separated
-- `Flow meta aspects`: MetaAspects, space-separated (`Psyche Mind Field`)
+| Skill variable | Field |
+|---|---|
+| `Flow source root` | SourceRoot, String |
+| `Flow stable Codex client path` | StableCodex ClientPath, String |
+| `Flow stable Codex home` | StableCodex Home, String |
+| `Flow stable Codex control socket path` | StableCodex ControlSocketPath, String |
+| `Flow stable Codex model names` | StableCodex Vector<ModelName>, Strings |
+| `Flow next Codex client path` | NextCodex ClientPath, String |
+| `Flow next Codex home` | NextCodex Home, String |
+| `Flow next Codex control socket path` | NextCodex ControlSocketPath, String |
+| `Flow next Codex model names` | NextCodex Vector<ModelName>, Strings |
+| `Flow Codex command sigils` | HarnessProfile Codex: Vector<CommandSigil>, Strings |
+| `Flow Codex interrupt keys` | HarnessProfile Codex: InterruptKeys, Vector<KeyName> |
+| `Flow Codex submit keys` | HarnessProfile Codex: SubmitKeys, Vector<KeyName> |
+| `Flow Claude command sigils` | HarnessProfile Claude: Vector<CommandSigil>, Strings |
+| `Flow Claude interrupt keys` | HarnessProfile Claude: InterruptKeys, Vector<KeyName> |
+| `Flow Claude submit keys` | HarnessProfile Claude: SubmitKeys, Vector<KeyName> |
+| `Flow meta aspects` | MetaAspects, Vector<Aspect>, aspect names such as `Field Mind` |
 
 MessageNexusPath is the sandbox's own Message ordinary socket, and Lease
-takes the design's default, 60 seconds.
+takes the design's default, 60 seconds. `checks/skill-variable.nix` runs the
+reader over `fixtures/skill-variable/sample.md`.

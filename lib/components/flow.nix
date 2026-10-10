@@ -17,6 +17,10 @@
     # XDG_RUNTIME_DIR (Message design, section 3).
     ordinarySocket = "flow/flow.sock";
 
+    # The meta socket a runner starts Flow on with Start.{ ordinary meta }:
+    # where Flow's clients look by default.
+    metaSocket = "flow/flow-meta.sock";
+
     # One meta Configure payload per layer: the layer's model.
     modelPayload = layer: model: "Configure.Model.{ ${layer} ${model} }";
   };

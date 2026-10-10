@@ -6,8 +6,9 @@
 #
 # A fresh short root (removed in an exit trap) holds HOME and
 # XDG_RUNTIME_DIR; only ~/.claude/.credentials.json is copied in. A headless
-# Herdr server, flow-nexus and message-nexus start on that root with no
-# arguments; each client reaches its Nexus at the defaults they share.
+# Herdr server and message-nexus start on that root with no arguments, and
+# flow-nexus with Start.{ ordinary meta }, its sockets under the root; each
+# client reaches its Nexus at the defaults they share.
 # Message's meta client persists the root's sockets and Message is restarted
 # on them; Flow is given the model of every layer.
 #
@@ -30,6 +31,7 @@ let
   message = flake.lib.components.message.forSystem system;
   flow = flake.lib.components.flow.forSystem system;
   herdr = flake.lib.components.herdr.forPkgs pkgs;
+  skillVariable = flake.lib.skillVariable { inherit pkgs; };
 in
 pkgs.writeShellApplication {
   name = "message-flow-claude";
@@ -38,7 +40,7 @@ pkgs.writeShellApplication {
     pkgs.coreutils
     pkgs.findutils
     pkgs.gnugrep
-    pkgs.gnused
+    skillVariable
     pkgs.iproute2
     pkgs.jq
     message.package
@@ -72,7 +74,8 @@ pkgs.writeShellApplication {
     cp "$credentials" "$HOME/.claude/.credentials.json"
     SHELL="${pkgs.bashInteractive}/bin/bash" herdr server > "$root/herdr.log" 2>&1 &
     pids+=($!)
-    RUST_LOG=debug ${flow.nexus} 2> "$root/flow-nexus.log" &
+    # Flow's sockets come from its start command.
+    RUST_LOG=debug ${flow.nexus} "Start.{ «$XDG_RUNTIME_DIR/${flow.ordinarySocket}» «$XDG_RUNTIME_DIR/${flow.metaSocket}» }" 2> "$root/flow-nexus.log" &
     pids+=($!)
     RUST_LOG=debug ${message.nexus} 2> "$root/message-nexus.log" &
     pids+=($!)
@@ -149,31 +152,67 @@ pkgs.writeShellApplication {
 
     # Launch needs Configure.Nexus. Its values differ between setups, so they
     # are skill variables, read at run time from the file
-    # MESSAGE_TEST_SKILL_VARIABLES names (one `Name: value` per line).
-    # MessageNexusPath is this sandbox's own Message ordinary socket; Lease
-    # takes the design's default, 60 seconds. A missing variable stops the
-    # run before any Launch.
+    # MESSAGE_TEST_SKILL_VARIABLES names (one `Name: value` per line, a list
+    # space-separated). StableCodex and NextCodex are CodexEndpoint, and
+    # HarnessProfiles a Vector<HarnessProfile> with one profile per
+    # HarnessKind, as meta-signal-flow declares them at the revision Flow
+    # 0.25.0 pins (88f37592); MetaAspects is aspect names. MessageNexusPath is
+    # this sandbox's own Message ordinary socket; Lease takes the design's
+    # default, 60 seconds. A missing variable stops the run before any Launch.
     variables="''${MESSAGE_TEST_SKILL_VARIABLES:-}"
     if [ ! -s "$variables" ]; then
       echo "message-flow-claude: set MESSAGE_TEST_SKILL_VARIABLES to the skill variables file" >&2
       exit 1
     fi
-    variable() {
-      grep -m1 "^$1: " "$variables" | cut -d' ' -f2- | sed "s/^ *//"
-    }
+    names=("Flow source root")
+    for endpoint in stable next; do
+      for field in "client path" home "control socket path" "model names"; do
+        names+=("Flow $endpoint Codex $field")
+      done
+    done
+    for kind in Codex Claude; do
+      for field in "command sigils" "interrupt keys" "submit keys"; do
+        names+=("Flow $kind $field")
+      done
+    done
+    names+=("Flow meta aspects")
     missing=()
-    for name in "Flow source root" "Flow stable Codex" "Flow next Codex" \
-      "Flow harness profiles" "Flow meta aspects"; do
-      [ -n "$(variable "$name")" ] || missing+=("$name")
+    for name in "''${names[@]}"; do
+      skill-variable "$variables" "$name" > /dev/null || missing+=("$name")
     done
     if [ "''${#missing[@]}" -gt 0 ]; then
-      printf 'message-flow-claude: no skill variable %s; stopped before Launch\n' "''${missing[@]}" >&2
+      printf 'message-flow-claude: no skill variable «%s»; stopped before Launch\n' "''${missing[@]}" >&2
       exit 1
     fi
-    nexus="Configure.Nexus.{ $(variable "Flow source root")"
-    nexus="$nexus $(variable "Flow stable Codex") $(variable "Flow next Codex")"
-    nexus="$nexus [ $(variable "Flow harness profiles") ] [ $(variable "Flow meta aspects") ]"
-    nexus="$nexus $XDG_RUNTIME_DIR/${message.ordinarySocket} 60 }"
+    variable() { skill-variable "$variables" "$1"; }
+    # A String is written in guillemets, a closing guillemet escaped.
+    string() { printf '«%s»' "''${1//»/\\»}"; }
+    strings() {
+      local words word out=""
+      read -ra words <<< "$1"
+      for word in "''${words[@]}"; do out="$out $(string "$word")"; done
+      printf '[%s ]' "$out"
+    }
+    # CodexEndpoint.{ ClientPath Home ControlSocketPath Vector<ModelName> }
+    endpoint() {
+      printf '{ %s %s %s %s }' \
+        "$(string "$(variable "Flow $1 Codex client path")")" \
+        "$(string "$(variable "Flow $1 Codex home")")" \
+        "$(string "$(variable "Flow $1 Codex control socket path")")" \
+        "$(strings "$(variable "Flow $1 Codex model names")")"
+    }
+    # HarnessProfile.{ HarnessKind Vector<CommandSigil> InterruptKeys SubmitKeys }
+    profile() {
+      printf '{ %s %s %s %s }' "$1" \
+        "$(strings "$(variable "Flow $1 command sigils")")" \
+        "$(strings "$(variable "Flow $1 interrupt keys")")" \
+        "$(strings "$(variable "Flow $1 submit keys")")"
+    }
+    nexus="Configure.Nexus.{ $(string "$(variable "Flow source root")")"
+    nexus="$nexus $(endpoint stable) $(endpoint next)"
+    nexus="$nexus [ $(profile Codex) $(profile Claude) ]"
+    nexus="$nexus [ $(variable "Flow meta aspects") ]"
+    nexus="$nexus $(string "$XDG_RUNTIME_DIR/${message.ordinarySocket}") 60 }"
     expect "flow meta Configure Nexus" Configured flow-meta "$nexus"
 
     test21() {
