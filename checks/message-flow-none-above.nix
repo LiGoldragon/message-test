@@ -1,7 +1,7 @@
 # Test 8. `Up` from a Primary: `Refused.NoneAbove`, and Flow's trace shows no
-# Lock for it. A control send down to Mind.{ nexus Secondary } first shows
+# Lock for it. A control send down to { Mind nexus Secondary } first shows
 # that Flow's trace does name Lock when Message asks for one.
-# Forks, first option: F5, F6, F7 (Message resolves Up), F8.
+# Forks, first option: F6, F7 (Message resolves Up), F8.
 {
   pkgs,
   flake,
@@ -11,7 +11,6 @@
 flake.lib.messageFlow { inherit pkgs flake system; } {
   name = "message-flow-none-above";
   forks = [
-    "F5"
     "F6"
     "F7"
     "F8"
@@ -21,10 +20,10 @@ flake.lib.messageFlow { inherit pkgs flake system; } {
     configure()
     sender, sender_pid = open_pane("primary")
     below, below_pid = open_pane("secondary")
-    bind("Mind.{ nexus Primary }", sender_pid)
-    bind("Mind.{ nexus Secondary }", below_pid)
+    bind("{ Mind nexus Primary }", sender_pid)
+    bind("{ Mind nexus Secondary }", below_pid)
     control = cursor()
-    expect_send(sender, send_datom("To.Mind.{ nexus Secondary }", "Order.«mfNoneAboveControl»"), "Delivered")
+    expect_send(sender, send_datom("{ Mind nexus Secondary }", "Order.«mfNoneAboveControl»"), "Delivered")
     trace_in_order("flow-nexus", ["Lock"], control)
     before = cursor()
     expect_send(sender, send_datom("Up", "Result.«mfNoneAbove»"), "Refused.NoneAbove")

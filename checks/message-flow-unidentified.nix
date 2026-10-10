@@ -20,8 +20,8 @@ flake.lib.messageFlow { inherit pkgs flake system; } {
     configure()
     stranger, _ = open_pane("stranger")
     recipient, recipient_pid = open_pane("mind")
-    bind("Mind.{ nexus Secondary }", recipient_pid)
-    expect_send_prefix(stranger, send_datom("To.Mind.{ nexus Secondary }", "Order.«mfUnidentified»"), "Refused.Unidentified.")
+    bind("{ Mind nexus Secondary }", recipient_pid)
+    expect_send_prefix(stranger, send_datom("{ Mind nexus Secondary }", "Order.«mfUnidentified»"), "Refused.Unidentified.")
     pane_lacks(recipient, "mfUnidentified")
   '';
 }

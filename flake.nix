@@ -1,5 +1,5 @@
 {
-  description = "message-test — acceptance scenarios that run the real Message Nexus with the real Flow Nexus, written to the Message design of flow 73ada7 and Flow's design at eaab24fa.";
+  description = "message-test — acceptance scenarios that run the real Message Nexus with the real Flow Nexus, written to the Message design of flow 73ada7 and Flow's design at e17a62ca.";
 
   inputs = {
     nixpkgs.url = "github:LiGoldragon/nixpkgs?ref=main";

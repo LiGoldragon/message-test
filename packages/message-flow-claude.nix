@@ -11,11 +11,11 @@
 # root's sockets, Flow with the model of every layer.
 #
 # 15. Forks, first option: F1, F4, F6, F10. A Notice, then an Order, to an
-#     asleep Mind.{ wake Secondary } (launched, then its pane closed): `Queued`,
+#     asleep { Mind wake Secondary } (launched, then its pane closed): `Queued`,
 #     then `Woken`; the woken flow's first prompt ends with
 #     `[ Notice.«…» Order.«…» ]`, the Order last.
 # 16. Forks, first option: F1, F4, F6, F10. An Order to the awake, working
-#     Mind.{ busy Secondary }: placed by Flow's rule (`Delivered` or `Queued`);
+#     { Mind busy Secondary }: placed by Flow's rule (`Delivered` or `Queued`);
 #     the recipient's transcript holds the Order exactly once.
 {
   pkgs,
@@ -96,9 +96,12 @@ pkgs.writeShellApplication {
     shellPid() {
       herdr pane process-info --pane "$1" | jq -r .result.process_info.shell_pid
     }
-    # bindPane <metaflow> <pane>: binds the pane's shell to the metaflow.
+    # bindPane <address> <pane>: binds the pane's shell (its pid and the
+    # kernel's start time of that pid) to the address.
     bindPane() {
-      reply="$(flow-meta "Bind.{ $1 $(shellPid "$2") }" 2>&1)" || true
+      pid="$(shellPid "$2")"
+      started="$(cut -d' ' -f22 "/proc/$pid/stat")"
+      reply="$(flow-meta "Bind.{ $1 { $pid $started } }" 2>&1)" || true
       echo "Bind $1: «$reply»"
       case "$reply" in Bound.*) ;; *) return 1 ;; esac
     }
@@ -124,16 +127,16 @@ pkgs.writeShellApplication {
 
     test15() {
       sender="$(openPane psyche-wake)"
-      bindPane 'Psyche.{ wake Secondary }' "$sender"
-      launched="$(flow 'Launch.{ Mind.{ wake Secondary } [ ] «Reply with the word ok, then stop.» }')"
+      bindPane '{ Psyche wake Secondary }' "$sender"
+      launched="$(flow 'Launch.{ { Mind wake Secondary } [ ] «Reply with the word ok, then stop.» }')"
       echo "Launch: «$launched»"
       case "$launched" in Launched.*) ;; *) return 1 ;; esac
       recipient="$(herdr pane list | jq -r --arg s "$sender" '.result.panes[] | select(.pane_id != $s) | .pane_id' | tail -1)"
       herdr pane close "$recipient"
-      expect "Current before" Current.Asleep flow 'Current.Mind.{ wake Secondary }'
-      reply="$(sendFrom "$sender" 'Send.{ To.Mind.{ wake Secondary } Soft.Notice.«mfWake branch merged» }')"
+      expect "Current before" Current.Asleep flow 'Current.{ Mind wake Secondary }'
+      reply="$(sendFrom "$sender" 'Send.{ { Mind wake Secondary } Soft.Notice.«mfWake branch merged» }')"
       [ "$reply" = Queued ] || { echo "Notice: «$reply», expected «Queued»" >&2; return 1; }
-      reply="$(sendFrom "$sender" 'Send.{ To.Mind.{ wake Secondary } Soft.Order.«mfWake reply ok» }')"
+      reply="$(sendFrom "$sender" 'Send.{ { Mind wake Secondary } Soft.Order.«mfWake reply ok» }')"
       [ "$reply" = Woken ] || { echo "Order: «$reply», expected «Woken»" >&2; return 1; }
       for _ in $(seq 1 600); do
         transcript="$(transcriptOf)"
@@ -150,8 +153,8 @@ pkgs.writeShellApplication {
 
     test16() {
       sender="$(openPane psyche-busy)"
-      bindPane 'Psyche.{ busy Secondary }' "$sender"
-      launched="$(flow 'Launch.{ Mind.{ busy Secondary } [ ] «Run the shell command sleep 30, then reply done.» }')"
+      bindPane '{ Psyche busy Secondary }' "$sender"
+      launched="$(flow 'Launch.{ { Mind busy Secondary } [ ] «Run the shell command sleep 30, then reply done.» }')"
       echo "Launch: «$launched»"
       case "$launched" in Launched.*) ;; *) return 1 ;; esac
       for _ in $(seq 1 600); do
@@ -159,7 +162,7 @@ pkgs.writeShellApplication {
         [ -n "$transcript" ] && grep -q '"tool_use"' "$transcript" && break
         sleep 0.5
       done
-      reply="$(sendFrom "$sender" 'Send.{ To.Mind.{ busy Secondary } Soft.Order.«mfBusy reply received» }')"
+      reply="$(sendFrom "$sender" 'Send.{ { Mind busy Secondary } Soft.Order.«mfBusy reply received» }')"
       case "$reply" in Delivered | Queued) ;; *) echo "Order: «$reply»" >&2; return 1 ;; esac
       for _ in $(seq 1 1200); do grep -q mfBusy "$transcript" && break; sleep 0.5; done
       count="$(jq -s '[.[] | select(.type == "user") | tostring | select(test("mfBusy"))] | length' "$transcript")"

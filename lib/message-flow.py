@@ -67,8 +67,11 @@ def open_pane(label):
     return pane, pid
 
 
-def bind(metaflow, pid):
-    expect_prefix(f"Bind {metaflow}", f"flow-meta 'Bind.{{ {metaflow} {pid} }}'", "Bound.")
+# Bind.{ Address Process }: Process is the pid and the kernel's start time of
+# that pid (field 22 of /proc/<pid>/stat, clock ticks since boot).
+def bind(address, pid):
+    started = machine.succeed(f"cut -d' ' -f22 /proc/{pid}/stat").strip()
+    expect_prefix(f"Bind {address}", f"flow-meta 'Bind.{{ {address} {{ {pid} {started} }} }}'", "Bound.")
 
 
 # Fork F6, first option: vision-messaging's Priority is a head on the message
