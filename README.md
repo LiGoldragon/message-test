@@ -10,8 +10,8 @@ The scenarios are written to two designs in the Primary repository
 - Message: `flows/73ada7/reports/build/message-design.md` at e275b6bd
   (blob 66d3fdcf), sections 3 to 9; tests are numbered as its section 9
   numbers them.
-- Flow: `flows/f5a6e9/reports/flow-buildable-design.md` at 9613a573
-  (blob d7ff15a0), sections 1 and 2.
+- Flow: `flows/f5a6e9/reports/flow-buildable-design.md` at 5f0e64f3
+  (blob 7a6c7911), sections 1 and 2.
 
 From them: an Address written short, `{ Mind nexus Secondary }`; the send
 `Send.{ Recipient Request }`, Recipient being Flow's
@@ -25,8 +25,10 @@ request. `Deliver.{ Lock Request }` and `Release.Lock` carry that Lock; one
 delivery per lock; the lease is 60 seconds by default. `Bind.{ Address
 Process }` with Process `{ Pid Started }`, answered `Bound.FlowId`;
 `Stop.FlowId` leaves the metaflow Asleep; `End.Address`, `Current.Address`
-and `Metaflows`. The design writes no print of `Unknown.[ Address Lock ]`,
-so those refusals are matched by their head.
+and `Metaflows`. Flow's unknown refusals are one
+`Unknown.[ Address Lock FlowId Key ]`; no design writes their print, so they
+are matched by their head. Flow is given only the model of each layer, with
+no `Configure.Nexus`, so it runs on its default Nexus setup and lease.
 
 Where the Message design leaves a fork to the living (its section 12), each
 scenario is written against the fork's first option and names that fork

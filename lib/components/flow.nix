@@ -1,7 +1,7 @@
 # Flow: the Flow Nexus and its `flow` / `flow-meta` clients, taken from the
 # `flow` input. The Nexus starts with no arguments and its clients reach it
-# at its default sockets. Requests are Flow's design at Primary 9613a573,
-# flows/f5a6e9/reports/flow-buildable-design.md (blob d7ff15a0): Lock,
+# at its default sockets. Requests are Flow's design at Primary 5f0e64f3,
+# flows/f5a6e9/reports/flow-buildable-design.md (blob 7a6c7911): Lock,
 # Identify, Deliver, Release, Current, End, Stop and Metaflows on the flow
 # socket; Configure and Bind on the meta socket.
 { inputs }:
