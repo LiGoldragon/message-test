@@ -10,8 +10,8 @@ The scenarios are written to two designs in the Primary repository
 - Message: `flows/73ada7/reports/build/message-design.md` at e275b6bd
   (blob 66d3fdcf), sections 3 to 9; tests are numbered as its section 9
   numbers them.
-- Flow: `flows/f5a6e9/reports/flow-buildable-design.md` at d849975a
-  (blob bf5d5914), sections 1 and 2.
+- Flow: `flows/f5a6e9/reports/flow-buildable-design.md` at 7398a43c
+  (blob ff8a60ce), sections 1 and 2.
 
 From them: an Address written short, `{ Mind nexus Secondary }`; the send
 `Send.{ Recipient Request }`, Recipient being Flow's
