@@ -7,8 +7,8 @@ flake inputs whose `nixpkgs` follows this flake's.
 The scenarios are written to two designs in the Primary repository
 (github:LiGoldragon/primary):
 
-- Message: `flows/73ada7/reports/build/message-design.md` at 4dc4f864
-  (blob 7112c6a6), sections 3 to 9; tests are numbered as its section 9
+- Message: `flows/73ada7/reports/build/message-design.md` at 23d2c4c8
+  (blob 24fee3c0), sections 3 to 9; tests are numbered as its section 9
   numbers them.
 - Flow: `flows/f5a6e9/reports/flow-buildable-design.md` at 30e8efc4
   (blob 4bad0825), sections 1 and 2.
@@ -26,7 +26,8 @@ Deliver and Release only from that exact Message process, so no scenario
 calls them directly; this repository keeps only what is observable through
 Message. Flow's own lock contract (an unknown lock, Release after Deliver and
 after lapse, a lapsed Until, End refused while a lock is held, the lease) is
-covered by flow-test, and so is a send from an asleep sender, refused Asleep.
+covered by flow-test, and so is the Message design's test 26, a send from an
+asleep sender, refused Asleep.
 Message binds at its start with
 `Bind.{ { Field message Primary } { Pid Started } }`. Test 21 makes the old
 store with old Message, the `message-old` input pinned at 6fa4d0. Flow starts with `Start.{ OrdinarySocketPath MetaSocketPath }`.
@@ -47,8 +48,7 @@ that payload MessageNexusBinary is the message-nexus under test and
 MessageNexusPath the VM's Message ordinary socket; SourceRoot, StableCodex,
 NextCodex, HarnessProfiles and MetaAspects are VM-local fixture values that
 no pure scenario exercises, since none launches a flow, and Lease is 60.
-Nothing in it comes from the living's setup. The unnumbered row is f5a6e9's
-ruling, not yet a row of the Message design.
+Nothing in it comes from the living's setup.
 
 Where the Message design leaves a fork to the living (its section 12), each
 scenario is written against the fork's first option and names that fork
@@ -75,7 +75,8 @@ Test unpushed code with `--override-input message path:<checkout>` or
     lib/message-flow.nix            the frame of a pure scenario: one VM, three user services
     lib/message-flow.py             the frame's helpers: configure, panes, Bind, send, trace
     checks/herdr.nix                the rig: headless Herdr in the VM
-    checks/message-flow-*.nix       tests 1 to 21, one per file; 11 pending
+    checks/message-flow-*.nix       tests 1-21 and 24-29, one per file;
+                                    11, 24, 25 pending; 26 in flow-test
     packages/message-flow-claude.nix tests 22 and 23, semi-sandbox
     fixtures/message-flow/          the meta Configure payloads
     lib/skill-variable.nix          the runner's skill-variable reader
@@ -107,7 +108,11 @@ Test unpushed code with `--override-input message path:<checkout>` or
 | 19 | message-flow-rebind | F2 F6* F8 | message-nexus killed, started again | Flow's trace shows the Bind answered Bound; a send succeeds |
 | 20 | message-flow-marker | F2 | fresh store: ordinary Configure, meta Configure moving a socket, ordinary Configure | Configured, RestartRequired, Refused.AlreadyConfigured |
 | 21 | message-flow-old-store | F14 | old Message's version-1 store at the store path | start refused, trace names the path, store checksum unchanged |
-| — | message-flow-not-configured | F2 | message-nexus started before Flow holds Configure.Nexus | nonzero exit, nothing listens, trace names NotConfigured |
+| 24 | pending | — | pid reuse during a paused caller read | needs a developer build of message-nexus that pauses mid-read, which no design gives |
+| 25 | pending | F8 | sender's metaflow has no Flow record at Lock | Refused.Unknown.Address naming the sender. Needs a Flow stand-in |
+| 27 | message-flow-sender-ended | F6* F8 | the sender's metaflow Ended while its shell runs, then it sends | Refused.Ended.… naming the sender |
+| 28 | message-flow-wrong-binary | F2 | a message-nexus copied to another store path is started | nonzero exit naming NotMessage; nothing listens |
+| 29 | message-flow-not-configured | F2 F6* F8 | message-nexus started before Flow holds Configure.Nexus, then after it | nonzero exit, nothing listens, trace names NotConfigured; then a send is Delivered |
 | 22 | message-flow-claude | F1 F4 F6* F10 | Notice then Order to a Claude metaflow asleep after Stop | Queued, Woken; first prompt ends with the queue, Order last |
 | 23 | message-flow-claude | F1 F4 F6* F10 | Order to working Claude flow | placed by Flow's rule; transcript holds it once |
 
