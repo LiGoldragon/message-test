@@ -10,8 +10,8 @@ The scenarios are written to two designs in the Primary repository
 - Message: `flows/73ada7/reports/build/message-design.md` at e275b6bd
   (blob 66d3fdcf), sections 3 to 9; tests are numbered as its section 9
   numbers them.
-- Flow: `flows/f5a6e9/reports/flow-buildable-design.md` at 5f0e64f3
-  (blob 7a6c7911), sections 1 and 2.
+- Flow: `flows/f5a6e9/reports/flow-buildable-design.md` at d849975a
+  (blob bf5d5914), sections 1 and 2.
 
 From them: an Address written short, `{ Mind nexus Secondary }`; the send
 `Send.{ Recipient Request }`, Recipient being Flow's
@@ -27,8 +27,9 @@ Process }` with Process `{ Pid Started }`, answered `Bound.FlowId`;
 `Stop.FlowId` leaves the metaflow Asleep; `End.Address`, `Current.Address`
 and `Metaflows`. Flow's unknown refusals are one
 `Unknown.[ Address Lock FlowId Key ]`; no design writes their print, so they
-are matched by their head. Flow is given only the model of each layer, with
-no `Configure.Nexus`, so it runs on its default Nexus setup and lease.
+are matched by their head. Flow's sockets come from its start command; the
+pure checks give it only the model of each layer and no `Configure.Nexus`,
+which only Launch needs, so its lease is the 60 second default.
 
 Where the Message design leaves a fork to the living (its section 12), each
 scenario is written against the fork's first option and names that fork
@@ -95,4 +96,18 @@ F7*: Flow resolves Up, per design.
 
     nix flake check --no-build --option allow-import-from-derivation false
     nix flake check --keep-going -L
-    MESSAGE_TEST_LIVE=1 nix run .#message-flow-claude
+    MESSAGE_TEST_LIVE=1 MESSAGE_TEST_SKILL_VARIABLES=<skill variables file> \
+      nix run .#message-flow-claude
+
+The semi-sandbox launches flows, and Launch needs Flow's `Configure.Nexus`.
+The runner reads its fields at run time from the skill variables file
+(`Name: value` lines) and stops before any Launch, naming each one missing:
+
+- `Flow source root`: SourceRoot
+- `Flow stable Codex`: StableCodex
+- `Flow next Codex`: NextCodex
+- `Flow harness profiles`: HarnessProfiles, space-separated
+- `Flow meta aspects`: MetaAspects, space-separated (`Psyche Mind Field`)
+- `Flow Message Nexus path`: MessageNexusPath
+
+Lease takes the design's default, 60 seconds.

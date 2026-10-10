@@ -38,6 +38,7 @@ pkgs.writeShellApplication {
     pkgs.coreutils
     pkgs.findutils
     pkgs.gnugrep
+    pkgs.gnused
     pkgs.iproute2
     pkgs.jq
     message.package
@@ -145,6 +146,34 @@ pkgs.writeShellApplication {
     for layer in Primary Secondary Tertiary Quaternary; do
       expect "flow meta Configure $layer" Configured flow-meta "Configure.Model.{ $layer $model }"
     done
+
+    # Launch needs Configure.Nexus. Its values differ between setups, so they
+    # are skill variables, read at run time from the file
+    # MESSAGE_TEST_SKILL_VARIABLES names (one `Name: value` per line). Lease
+    # takes the design's default, 60 seconds. A missing variable stops the
+    # run before any Launch.
+    variables="''${MESSAGE_TEST_SKILL_VARIABLES:-}"
+    if [ ! -s "$variables" ]; then
+      echo "message-flow-claude: set MESSAGE_TEST_SKILL_VARIABLES to the skill variables file" >&2
+      exit 1
+    fi
+    variable() {
+      grep -m1 "^$1: " "$variables" | cut -d' ' -f2- | sed "s/^ *//"
+    }
+    missing=()
+    for name in "Flow source root" "Flow stable Codex" "Flow next Codex" \
+      "Flow harness profiles" "Flow meta aspects" "Flow Message Nexus path"; do
+      [ -n "$(variable "$name")" ] || missing+=("$name")
+    done
+    if [ "''${#missing[@]}" -gt 0 ]; then
+      printf 'message-flow-claude: no skill variable %s; stopped before Launch\n' "''${missing[@]}" >&2
+      exit 1
+    fi
+    nexus="Configure.Nexus.{ $(variable "Flow source root")"
+    nexus="$nexus $(variable "Flow stable Codex") $(variable "Flow next Codex")"
+    nexus="$nexus [ $(variable "Flow harness profiles") ] [ $(variable "Flow meta aspects") ]"
+    nexus="$nexus $(variable "Flow Message Nexus path") 60 }"
+    expect "flow meta Configure Nexus" Configured flow-meta "$nexus"
 
     test21() {
       sender="$(openPane psyche-wake)"
