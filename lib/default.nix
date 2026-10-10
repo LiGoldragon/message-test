@@ -7,6 +7,15 @@
     messageOld = import ./components/message-old.nix { inherit inputs; };
     flow = import ./components/flow.nix { inherit inputs; };
     herdr = import ./components/herdr.nix;
+    flowStandIn = {
+      forSystem = system: {
+        package = import ../packages/flow-stand-in.nix {
+          pkgs = inputs.nixpkgs.legacyPackages.${system};
+          flake = inputs;
+          inherit system;
+        };
+      };
+    };
   };
 
   # The frame every pure message-flow scenario shares:

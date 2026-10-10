@@ -16,6 +16,12 @@
 
     flow.url = "github:LiGoldragon/flow";
     flow.inputs.nixpkgs.follows = "nixpkgs";
+
+    signal-flow.url = "github:LiGoldragon/signal-flow/a991c1499b201ad75a084a6542d2f110c46720ce";
+    signal-flow.inputs.nixpkgs.follows = "nixpkgs";
+
+    signal.url = "github:LiGoldragon/signal/e0e3c05573405e793037205640e54cfd769bb1b4";
+    signal.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = inputs: inputs.blueprint { inherit inputs; };
