@@ -108,6 +108,6 @@ The runner reads its fields at run time from the skill variables file
 - `Flow next Codex`: NextCodex
 - `Flow harness profiles`: HarnessProfiles, space-separated
 - `Flow meta aspects`: MetaAspects, space-separated (`Psyche Mind Field`)
-- `Flow Message Nexus path`: MessageNexusPath
 
-Lease takes the design's default, 60 seconds.
+MessageNexusPath is the sandbox's own Message ordinary socket, and Lease
+takes the design's default, 60 seconds.

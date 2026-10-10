@@ -149,7 +149,8 @@ pkgs.writeShellApplication {
 
     # Launch needs Configure.Nexus. Its values differ between setups, so they
     # are skill variables, read at run time from the file
-    # MESSAGE_TEST_SKILL_VARIABLES names (one `Name: value` per line). Lease
+    # MESSAGE_TEST_SKILL_VARIABLES names (one `Name: value` per line).
+    # MessageNexusPath is this sandbox's own Message ordinary socket; Lease
     # takes the design's default, 60 seconds. A missing variable stops the
     # run before any Launch.
     variables="''${MESSAGE_TEST_SKILL_VARIABLES:-}"
@@ -162,7 +163,7 @@ pkgs.writeShellApplication {
     }
     missing=()
     for name in "Flow source root" "Flow stable Codex" "Flow next Codex" \
-      "Flow harness profiles" "Flow meta aspects" "Flow Message Nexus path"; do
+      "Flow harness profiles" "Flow meta aspects"; do
       [ -n "$(variable "$name")" ] || missing+=("$name")
     done
     if [ "''${#missing[@]}" -gt 0 ]; then
@@ -172,7 +173,7 @@ pkgs.writeShellApplication {
     nexus="Configure.Nexus.{ $(variable "Flow source root")"
     nexus="$nexus $(variable "Flow stable Codex") $(variable "Flow next Codex")"
     nexus="$nexus [ $(variable "Flow harness profiles") ] [ $(variable "Flow meta aspects") ]"
-    nexus="$nexus $(variable "Flow Message Nexus path") 60 }"
+    nexus="$nexus $XDG_RUNTIME_DIR/${message.ordinarySocket} 60 }"
     expect "flow meta Configure Nexus" Configured flow-meta "$nexus"
 
     test21() {
