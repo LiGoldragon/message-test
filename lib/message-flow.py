@@ -43,7 +43,9 @@ def start():
         machine.wait_for_unit(unit, user="alice")
     machine.wait_until_succeeds(as_alice("herdr workspace list"), timeout=60)
     for socket in ["message/message.sock", "message/message-meta.sock", "flow/flow.sock", "flow/flow-meta.sock"]:
-        machine.wait_until_succeeds(f"test -S {RUNTIME}/{socket}", timeout=30)
+        status, _ = machine.execute(f"timeout 30 sh -c 'until test -S {RUNTIME}/{socket}; do sleep 0.2; done'")
+        bound = machine.succeed(f"ls {RUNTIME}/message {RUNTIME}/flow 2>&1 || true")
+        assert status == 0, f"{socket} never bound; bound under {RUNTIME}:\n{bound}"
 
 
 def configure():

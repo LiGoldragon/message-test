@@ -59,7 +59,12 @@ pkgs.writeShellApplication {
     # A short root: sun_path holds 108 bytes.
     root="$(mktemp -d /tmp/mt-XXXXXXXX)"
     pids=()
-    trap 'for pid in "''${pids[@]}"; do kill "$pid" 2>/dev/null || true; done; herdr server stop >/dev/null 2>&1 || true; rm -rf "$root"' EXIT
+    cleanup() {
+      for started in "''${pids[@]}"; do kill "$started" 2>/dev/null || true; done
+      herdr server stop > /dev/null 2>&1 || true
+      rm -rf "$root"
+    }
+    trap cleanup EXIT
 
     export HOME="$root/home" XDG_RUNTIME_DIR="$root/run"
     mkdir -p "$HOME/.claude" "$XDG_RUNTIME_DIR"
@@ -167,14 +172,17 @@ pkgs.writeShellApplication {
       [ "$count" = 1 ]
     }
 
+    # report <name> <exit code>
     failed=0
-    for name in test15 test16; do
-      set +e
-      ( set -e; "$name" )
-      code=$?
-      set -e
-      if [ "$code" = 0 ]; then echo "$name: PASS"; else echo "$name: FAIL"; failed=1; fi
-    done
+    report() {
+      if [ "$2" = 0 ]; then echo "$1: PASS"; else echo "$1: FAIL"; failed=1; fi
+    }
+    set +e
+    ( set -e; test15 )
+    report test15 $?
+    ( set -e; test16 )
+    report test16 $?
+    set -e
     exit "$failed"
   '';
 }
