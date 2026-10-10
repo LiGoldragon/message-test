@@ -74,8 +74,20 @@ pkgs.writeShellApplication {
     cp "$credentials" "$HOME/.claude/.credentials.json"
     SHELL="${pkgs.bashInteractive}/bin/bash" herdr server > "$root/herdr.log" 2>&1 &
     pids+=($!)
+    # A datom String: bare when it has no space, no delimiter glyph and does
+    # not begin or end with . ! or :, else in guillemets, a closing
+    # guillemet escaped.
+    string() {
+      case "$1" in
+        "" | *[[:space:]]* | *[{}\[\]\<\>\(\)\;]* | *«* | *»* | [.!:]* | *[.!:])
+          printf '«%s»' "''${1//»/\\»}"
+          ;;
+        *) printf '%s' "$1" ;;
+      esac
+    }
+
     # Flow's sockets come from its start command.
-    RUST_LOG=debug ${flow.nexus} "Start.{ «$XDG_RUNTIME_DIR/${flow.ordinarySocket}» «$XDG_RUNTIME_DIR/${flow.metaSocket}» }" 2> "$root/flow-nexus.log" &
+    RUST_LOG=debug ${flow.nexus} "Start.{ $(string "$XDG_RUNTIME_DIR/${flow.ordinarySocket}") $(string "$XDG_RUNTIME_DIR/${flow.metaSocket}") }" 2> "$root/flow-nexus.log" &
     pids+=($!)
     RUST_LOG=debug ${message.nexus} 2> "$root/message-nexus.log" &
     pids+=($!)
@@ -185,8 +197,6 @@ pkgs.writeShellApplication {
       exit 1
     fi
     variable() { skill-variable "$variables" "$1"; }
-    # A String is written in guillemets, a closing guillemet escaped.
-    string() { printf '«%s»' "''${1//»/\\»}"; }
     strings() {
       local words word out=""
       read -ra words <<< "$1"

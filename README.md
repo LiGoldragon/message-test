@@ -17,12 +17,16 @@ From them: an Address written short, `{ Mind nexus Secondary }`; the send
 `Send.{ Recipient Request }`, Recipient being Flow's
 `Recipient.[ Address Up ]`, written as the Message design writes it,
 `Send.{ { Mind nexus Secondary } Order.«…» }` or `Send.{ Up Result.«…» }`.
-On Flow: the lock request `Lock.{ Sender Recipient }`, written
-`Lock.{ { Psyche nexus Secondary } { Mind nexus Secondary } }`, answered
+On Flow: Message's lock request `Lock.{ Sender Recipient }`, answered
 `Locked.Lock` with the Lock `{ Sender Address Until }`; Flow resolves `Up`
 relative to the sender and refuses `OffRoute` and `NoneAbove` at the lock
-request. `Deliver.{ Lock Request }` and `Release.Lock` carry that Lock; one
-delivery per lock; the lease is 60 seconds by default. `Bind.{ Address
+request; `Deliver.{ Lock Request }` and `Release.Lock` carry that Lock.
+Message binds to Flow as `{ Field message Primary }`, and Flow admits Lock,
+Deliver and Release only from that exact Message process, so no scenario
+calls them directly and the tests that need a lock held from outside Message
+are pending. Flow starts with `Start.{ OrdinarySocketPath MetaSocketPath }`.
+A datom String is written bare when it has no space, no delimiter glyph and
+does not begin or end with `.`, `!` or `:`; otherwise in guillemets. `Bind.{ Address
 Process }` with Process `{ Pid Started }`, answered `Bound.FlowId`;
 `Stop.FlowId` leaves the metaflow Asleep; `End.Address`, `Current.Address`
 and `Metaflows`. Flow's unknown refusals are one
@@ -56,7 +60,7 @@ Test unpushed code with `--override-input message path:<checkout>` or
     lib/message-flow.nix            the frame of a pure scenario: one VM, three user services
     lib/message-flow.py             the frame's helpers: configure, panes, Bind, send, trace
     checks/herdr.nix                the rig: headless Herdr in the VM
-    checks/message-flow-*.nix       tests 1 to 20, one per file, 18 pending
+    checks/message-flow-*.nix       tests 1 to 20, one per file; 11 and 16 to 20 pending
     packages/message-flow-claude.nix tests 21 and 22, semi-sandbox
     fixtures/message-flow/          the meta Configure payloads
     lib/skill-variable.nix          the runner's skill-variable reader
@@ -67,26 +71,26 @@ Test unpushed code with `--override-input message path:<checkout>` or
 
 | # | check | forks | drive | expect |
 |---|---|---|---|---|
-| 1 | message-flow-delivered | F2 F4 F6* F8 F9 F10 | Order to awake { Mind nexus Secondary } | Delivered; trace Identified, Locked, Delivered; pane shows sender and request; lock gone |
+| 1 | message-flow-delivered | F2 F4 F6* F8 F9 F10 | Order to awake { Mind nexus Secondary } | Delivered; trace Identified, Locked, Delivered; pane shows sender and request |
 | 2 | message-flow-queued | F1 F6* F8 | Notice to a metaflow asleep after Stop | Queued; Current.Asleep; Metaflows shows the Notice queued once |
-| 3 | message-flow-unknown | F6* F8 | send to no such metaflow | Refused.Unknown.…; no lock record |
+| 3 | message-flow-unknown | F6* F8 | send to no such metaflow | Refused.Unknown.… |
 | 4 | message-flow-ended | F6* F8 | send to Ended metaflow | Refused.Ended.… |
-| 5 | message-flow-off-route | F2 F6* F8 | Field Tertiary to Psyche Primary | Refused.OffRoute from the lock; no lock record; no Deliver or Release traced |
+| 5 | message-flow-off-route | F2 F6* F8 | Field Tertiary to Psyche Primary | Refused.OffRoute from the lock; no Deliver or Release traced |
 | 6 | message-flow-same-layer | F4 F6* F8 F10 | Field Secondary to Mind Secondary | Delivered |
 | 7 | message-flow-above | F4 F6* F8 F10 | Mind Secondary to { Mind nexus Primary } | Delivered to Mind Primary |
 | 8 | message-flow-up | F4 F6* F7* F8 F10 | Up from Mind Secondary | trace Identified, Locked carrying { Mind nexus Primary }, Delivered; delivered to Mind Primary |
 | 9 | message-flow-none-above | F6* F7* F8 | Up from Mind Primary | Refused.NoneAbove from the lock; no Deliver in the trace |
 | 10 | message-flow-unidentified | F6* F8 F11 | send from an unbound pane | Refused.Unidentified.… |
-| 11 | message-flow-held | F2 F3 F6* F8 | Lock taken directly, then send; clock past Until | Refused.Held.…, then Delivered |
+| 11 | pending | F2 F3 F6* F8 | Lock taken directly, then send | Refused.Held.…, then Delivered. Flow admits Lock only from Message |
 | 12 | message-flow-unreachable | F2 F6* | Flow stopped, then send | Refused.FlowUnreachable |
 | 13 | message-flow-first-configure | F2 | ordinary, meta, ordinary Configure | Configured, Configured, Refused.AlreadyConfigured |
 | 14 | message-flow-restart | F2 F6* F8 | Message restarted with no arguments | send Delivered, no new Configure |
 | 15 | message-flow-unreadable | — | unreadable datom to `message` | CLI refuses; no connection traced |
-| 16 | message-flow-unknown-lock | F2 | Flow Deliver under a lock never granted | Refused.Unknown.… |
-| 17 | message-flow-release | F2 | Release after Deliver; of a lapsed lock; of a lock never granted | Refused.Unknown.…; Refused.Lapsed; Refused.Unknown.… |
+| 16 | pending | F2 | Flow Deliver under a lock never granted | Refused.Unknown.Lock. Flow admits Deliver only from Message |
+| 17 | pending | F2 | Release after Deliver; of a lapsed lock; of a lock never granted | Unknown.Lock; Lapsed; Unknown.Lock. Flow admits Release only from Message |
 | 18 | pending | — | a Flow stand-in answers Locked with an Until already past, then a send | Refused.Lapsed. No component or design gives the stand-in |
-| 19 | message-flow-held-end | F2 | End of M under a lock taken directly, then after Release | Refused.Held.…, then Ended |
-| 20 | message-flow-lease | F2 | Flow with no Lease, then a lock | Until 60 seconds past the grant |
+| 19 | pending | F2 | End of M under a held lock, then after release | Refused.Held.Lock, then Ended. No lock can be held from outside Message |
+| 20 | pending | F2 | Flow with no Lease, then a lock | Until 60 seconds past the grant. No Until is observable from outside Message |
 | 21 | message-flow-claude | F1 F4 F6* F10 | Notice then Order to a Claude metaflow asleep after Stop | Queued, Woken; first prompt ends with the queue, Order last |
 | 22 | message-flow-claude | F1 F4 F6* F10 | Order to working Claude flow | placed by Flow's rule; transcript holds it once |
 

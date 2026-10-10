@@ -55,7 +55,7 @@ pkgs.testers.runNixOSTest {
     systemd.user.services = {
       message-nexus = nexusService message.nexus;
       # Flow's sockets come only from its start command.
-      flow-nexus = nexusService "${flow.nexus} \"Start.{ «/run/user/1000/${flow.ordinarySocket}» «/run/user/1000/${flow.metaSocket}» }\"";
+      flow-nexus = nexusService "${flow.nexus} \"Start.{ /run/user/1000/${flow.ordinarySocket} /run/user/1000/${flow.metaSocket} }\"";
       herdr = {
         wantedBy = [ "default.target" ];
         unitConfig.ConditionUser = "alice";

@@ -22,6 +22,6 @@ flake.lib.messageFlow { inherit pkgs flake system; } {
     bind("{ Mind nexus Secondary }", recipient_pid)
     status, out = run("systemctl --user stop flow-nexus.service")
     assert status == 0, f"stopping flow-nexus: {out}"
-    expect_send(sender, send_datom("{ Mind nexus Secondary }", "Order.«mfUnreachable»"), "Refused.FlowUnreachable")
+    expect_send(sender, send_datom("{ Mind nexus Secondary }", "Order.«mfUnreachable request»"), "Refused.FlowUnreachable")
   '';
 }

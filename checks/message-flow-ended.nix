@@ -22,6 +22,6 @@ flake.lib.messageFlow { inherit pkgs flake system; } {
     bind("{ Psyche nexus Secondary }", sender_pid)
     bind("{ Mind nexus Secondary }", recipient_pid)
     expect("End", "flow 'End.{ Mind nexus Secondary }'", "Ended")
-    expect_send(sender, send_datom("{ Mind nexus Secondary }", "Order.«mfEnded»"), "Refused.Ended.{ Mind nexus Secondary }")
+    expect_send(sender, send_datom("{ Mind nexus Secondary }", "Order.«mfEnded request»"), "Refused.Ended.{ Mind nexus Secondary }")
   '';
 }

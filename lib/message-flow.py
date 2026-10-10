@@ -3,7 +3,6 @@
 # machine; a send runs `message` inside a Herdr pane, so the caller is a
 # descendant of that pane's shell, the process a scenario binds to a metaflow.
 import json
-import re
 import shlex
 
 RUNTIME = "/run/user/1000"
@@ -100,23 +99,6 @@ def bind(address, pid):
     return bound_reply[len("Bound."):]
 
 
-# Flow's lock request Lock.{ Sender Recipient }, the Recipient's Address form
-# written short: `Lock.{ { Psyche nexus Secondary } { Mind nexus Secondary } }`.
-# Answered Locked.Lock, the Lock being `{ Sender Address Until }`.
-def flow_lock(sender, recipient):
-    status, got = run(f"flow 'Lock.{{ {sender} {recipient} }}'")
-    print(f"Lock.{{ {sender} {recipient} }}: «{got}» (exit {status})")
-    return got
-
-
-def lock_of(locked):
-    assert locked.startswith("Locked."), f"expected «Locked.…», got «{locked}»"
-    return locked[len("Locked."):]
-
-
-def now():
-    return int(machine.succeed("date +%s").strip())
-
 
 # Send.{ Recipient Request }, Recipient.[ Address Up ] from Flow's Library,
 # written as the Message design
@@ -180,9 +162,3 @@ def trace_in_order(unit, words, after=None):
         found = text.find(word, position)
         assert found >= 0, f"{unit} trace lacks «{word}» after position {position}:\n{text}"
         position = found + len(word)
-
-
-def lock_until(reply):
-    numbers = re.findall(r"\d+", reply)
-    assert numbers, f"no Until in «{reply}»"
-    return int(numbers[-1])

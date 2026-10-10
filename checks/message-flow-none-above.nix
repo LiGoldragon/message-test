@@ -26,7 +26,7 @@ flake.lib.messageFlow { inherit pkgs flake system; } {
     bind("{ Mind nexus Primary }", sender_pid)
     bind("{ Mind nexus Secondary }", below_pid)
     before = cursor()
-    expect_send(sender, send_datom("Up", "Result.«mfNoneAbove»"), "Refused.NoneAbove")
+    expect_send(sender, send_datom("Up", "Result.«mfNoneAbove request»"), "Refused.NoneAbove")
     traced = trace("message-nexus", before)
     assert "Deliver" not in traced, f"message-nexus traced a Deliver for a refused Up:\n{traced}"
     pane_lacks(below, "mfNoneAbove")
