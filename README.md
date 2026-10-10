@@ -8,7 +8,8 @@ section 9) and Flow's design at Primary revision e17a62ca
 (`flows/f5a6e9/reports/flow-buildable-design.md`). The Address,
 Lock, Process and Request forms are Flow's at e17a62ca:
 `{ Mind nexus Secondary }`, `Lock.{ Address Until }`, `Bind.{ Address { Pid
-Started } }`, and Message's `Send.{ Address Request }` (or `Send.{ Up Request }`).
+Started } }`, and `Send.{ Recipient.[ Address Up ] Request }`, written
+`Send.{ Address.{ Mind nexus Secondary } Order.«…» }` or `Send.{ Up Result.«…» }`.
 Fork F5 is therefore taken as Flow's design writes it, the struct
 `{ Aspect Topic Layer }`, and no scenario names it. Where the Message design
 leaves a fork to the living (its section 12), each scenario is written
@@ -44,8 +45,8 @@ Test unpushed code with `--override-input message path:<checkout>` or
 | 4 | message-flow-ended | F6* F8 | send to Ended metaflow | Refused.Ended.… |
 | 5 | message-flow-off-route | F2 F6* F8 | Field Tertiary to Psyche Primary | Refused.OffRoute; lock released |
 | 6 | message-flow-same-layer | F4 F6* F8 F10 | Field Secondary to Mind Secondary | Delivered |
-| 7 | message-flow-up | F4 F6* F7 F8 F10 | Up from Mind Secondary | delivered to Mind Primary |
-| 8 | message-flow-none-above | F6* F7 F8 | Up from a Primary | Refused.NoneAbove; no Lock in Flow's trace |
+| 7 | message-flow-up | F4 F6* F7* F8 F10 | Up from Mind Secondary | Flow resolves it; delivered to Mind Primary |
+| 8 | message-flow-none-above | F6* F7* F8 | Up from a Primary | Flow refuses; Refused.NoneAbove |
 | 9 | message-flow-unidentified | F6* F8 F11 | send from an unbound pane | Refused.Unidentified.… |
 | 10 | message-flow-held | F2 F3 F6* F8 | Lock taken directly, then send; clock past Until | Refused.Held.…, then Delivered |
 | 11 | message-flow-unreachable | F2 F6* | Flow stopped, then send | Refused.FlowUnreachable |
@@ -56,7 +57,9 @@ Test unpushed code with `--override-input message path:<checkout>` or
 | 16 | message-flow-claude | F1 F4 F6* F10 | Order to working Claude flow | placed by Flow's rule; transcript holds it once |
 
 F6* is not its first option: no tiers, per design. The request carries no
-priority head (`Send.{ { Mind nexus Secondary } Order.«…» }`).
+priority head (`Send.{ Address.{ Mind nexus Secondary } Order.«…» }`).
+F7* is not its first option: Flow resolves Up, per f5a6e9's ruling, and
+refuses NoneAbove at the top layer.
 
 ## Running
 

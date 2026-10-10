@@ -74,9 +74,12 @@ def bind(address, pid):
     expect_prefix(f"Bind {address}", f"flow-meta 'Bind.{{ {address} {{ {pid} {started} }} }}'", "Bound.")
 
 
+# Send.{ Recipient.[ Address Up ] Request }: an address is written as the
+# Recipient variant `Address.{ Mind nexus Secondary }`, a send up as `Up`.
 # Fork F6: no tiers, per design. The request carries no priority head.
 def send_datom(recipient, request):
-    return f"Send.{{ {recipient} {request} }}"
+    target = recipient if recipient == "Up" else f"Address.{recipient}"
+    return f"Send.{{ {target} {request} }}"
 
 
 def send_from(pane, datom):

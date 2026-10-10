@@ -16,7 +16,7 @@ flake.lib.messageFlow { inherit pkgs flake system; } {
     start()
     configure()
     before = cursor()
-    status, out = run("message 'Send.{ { Mind nexus'")
+    status, out = run("message 'Send.{ Address.{ Mind nexus'")
     print(f"unreadable: «{out}» (exit {status})")
     assert status != 0, "message accepted an unreadable datom"
     silent = trace("message-nexus", before)

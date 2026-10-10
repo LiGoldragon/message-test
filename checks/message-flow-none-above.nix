@@ -1,7 +1,8 @@
-# Test 8. `Up` from a Primary: `Refused.NoneAbove`, and Flow's trace shows no
-# Lock for it. A control send down to { Mind nexus Secondary } first shows
-# that Flow's trace does name Lock when Message asks for one.
-# Forks, first option: F7 (Message resolves Up), F8.
+# Test 8. `Up` from a Primary: Flow, resolving Up, finds no layer above
+# within the sender's aspect and refuses; Message answers `Refused.NoneAbove`,
+# and the layer below, also awake, never shows the request.
+# Forks, first option: F8.
+# F7: Flow resolves Up, per f5a6e9's ruling.
 # F6: no tiers, per design (the request carries no priority head).
 {
   pkgs,
@@ -13,7 +14,7 @@ flake.lib.messageFlow { inherit pkgs flake system; } {
   name = "message-flow-none-above";
   forks = [
     "F6 no tiers, per design"
-    "F7"
+    "F7 Flow resolves Up, per f5a6e9's ruling"
     "F8"
   ];
   script = ''
@@ -23,12 +24,7 @@ flake.lib.messageFlow { inherit pkgs flake system; } {
     below, below_pid = open_pane("secondary")
     bind("{ Mind nexus Primary }", sender_pid)
     bind("{ Mind nexus Secondary }", below_pid)
-    control = cursor()
-    expect_send(sender, send_datom("{ Mind nexus Secondary }", "Order.«mfNoneAboveControl»"), "Delivered")
-    trace_in_order("flow-nexus", ["Lock"], control)
-    before = cursor()
     expect_send(sender, send_datom("Up", "Result.«mfNoneAbove»"), "Refused.NoneAbove")
-    after = trace("flow-nexus", before)
-    assert "Lock" not in after, f"Flow was asked for a lock on Up from a Primary:\n{after}"
+    pane_lacks(below, "mfNoneAbove")
   '';
 }

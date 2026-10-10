@@ -136,9 +136,9 @@ pkgs.writeShellApplication {
       recipient="$(herdr pane list | jq -r --arg s "$sender" '.result.panes[] | select(.pane_id != $s) | .pane_id' | tail -1)"
       herdr pane close "$recipient"
       expect "Current before" Current.Asleep flow 'Current.{ Mind wake Secondary }'
-      reply="$(sendFrom "$sender" 'Send.{ { Mind wake Secondary } Notice.«mfWake branch merged» }')"
+      reply="$(sendFrom "$sender" 'Send.{ Address.{ Mind wake Secondary } Notice.«mfWake branch merged» }')"
       [ "$reply" = Queued ] || { echo "Notice: «$reply», expected «Queued»" >&2; return 1; }
-      reply="$(sendFrom "$sender" 'Send.{ { Mind wake Secondary } Order.«mfWake reply ok» }')"
+      reply="$(sendFrom "$sender" 'Send.{ Address.{ Mind wake Secondary } Order.«mfWake reply ok» }')"
       [ "$reply" = Woken ] || { echo "Order: «$reply», expected «Woken»" >&2; return 1; }
       for _ in $(seq 1 600); do
         transcript="$(transcriptOf)"
@@ -164,7 +164,7 @@ pkgs.writeShellApplication {
         [ -n "$transcript" ] && grep -q '"tool_use"' "$transcript" && break
         sleep 0.5
       done
-      reply="$(sendFrom "$sender" 'Send.{ { Mind busy Secondary } Order.«mfBusy reply received» }')"
+      reply="$(sendFrom "$sender" 'Send.{ Address.{ Mind busy Secondary } Order.«mfBusy reply received» }')"
       case "$reply" in Delivered | Queued) ;; *) echo "Order: «$reply»" >&2; return 1 ;; esac
       for _ in $(seq 1 1200); do grep -q mfBusy "$transcript" && break; sleep 0.5; done
       count="$(jq -s '[.[] | select(.type == "user") | tostring | select(test("mfBusy"))] | length' "$transcript")"

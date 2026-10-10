@@ -1,7 +1,8 @@
-# Test 7. `Up` from { Mind nexus Secondary }: Message resolves it to
-# { Mind nexus Primary } (same aspect and topic, one layer up); `Delivered`,
-# and that pane shows the sender and the request.
-# Forks, first option: F4, F7 (Message resolves Up), F8, F10.
+# Test 7. `Up` from { Mind nexus Secondary }: Flow resolves it to
+# { Mind nexus Primary } (the layer above within the sender's aspect);
+# `Delivered`, and that pane shows the sender and the request.
+# Forks, first option: F4, F8, F10.
+# F7: Flow resolves Up, per f5a6e9's ruling.
 # F6: no tiers, per design (the request carries no priority head).
 {
   pkgs,
@@ -14,7 +15,7 @@ flake.lib.messageFlow { inherit pkgs flake system; } {
   forks = [
     "F4"
     "F6 no tiers, per design"
-    "F7"
+    "F7 Flow resolves Up, per f5a6e9's ruling"
     "F8"
     "F10"
   ];
