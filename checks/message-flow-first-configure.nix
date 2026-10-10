@@ -1,4 +1,4 @@
-# Test 12. A fresh store: `Configure` on the ordinary socket is answered
+# Test 13. A fresh store: `Configure` on the ordinary socket is answered
 # `Configured` while MetaConfigured is false; a meta `Configure` answers
 # `Configured` and sets it true; the same ordinary `Configure` is then
 # `Refused.AlreadyConfigured`. The payload names the default paths, so no

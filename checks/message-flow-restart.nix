@@ -1,4 +1,4 @@
-# Test 13. Message restarted, again with no arguments, on its existing store:
+# Test 14. Message restarted, again with no arguments, on its existing store:
 # the send of test 1 is `Delivered` with no new Configure.
 # Forks, first option: F2, F8.
 # F6: no tiers, per design (the request carries no priority head).

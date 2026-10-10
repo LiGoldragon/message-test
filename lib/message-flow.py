@@ -98,11 +98,12 @@ def bind(address, pid):
     expect_prefix(f"Bind {address}", f"flow-meta 'Bind.{{ {address} {{ {pid} {started} }} }}'", "Bound.")
 
 
-# Send.{ Address Request }, the address written short:
-# `Send.{ { Mind nexus Secondary } Order.«…» }` (Message design, section 5).
+# Send.{ Recipient.[ Address Up ] Request }, written as the Message design
+# writes it: the Address variant short, `Send.{ { Mind nexus Secondary }
+# Order.«…» }` (section 5), and a send up `Send.{ Up Order.«…» }` (7.4).
 # Fork F6: no tiers, per design. The request carries no priority head.
-def send_datom(address, request):
-    return f"Send.{{ {address} {request} }}"
+def send_datom(recipient, request):
+    return f"Send.{{ {recipient} {request} }}"
 
 
 def send_from(pane, datom):

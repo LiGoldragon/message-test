@@ -1,9 +1,10 @@
-# Test 7. A send up: { Mind nexus Secondary } sends to { Mind nexus Primary },
-# the address one layer above its own in the same aspect and topic, written
-# by the sender (Message design, section 7.4: Message resolves nothing);
-# `Delivered`, and that pane shows the sender and the request.
+# Test 8. `Up` from { Mind nexus Secondary }: `Send.{ Up Result.«…» }`. Flow
+# resolves Up to the layer above within the sender's aspect and topic,
+# { Mind nexus Primary }; `Delivered`, Message's trace runs Identified,
+# ResolvedUp, Locked, Delivered in that order, and that pane shows the sender
+# and the request.
 # Forks, first option: F4, F8, F10.
-# F7: no Up, per design (Send carries an Address).
+# F7: Flow resolves Up, per design.
 # F6: no tiers, per design (the request carries no priority head).
 {
   pkgs,
@@ -16,7 +17,7 @@ flake.lib.messageFlow { inherit pkgs flake system; } {
   forks = [
     "F4"
     "F6 no tiers, per design"
-    "F7 no Up, per design"
+    "F7 Flow resolves Up, per design"
     "F8"
     "F10"
   ];
@@ -27,7 +28,9 @@ flake.lib.messageFlow { inherit pkgs flake system; } {
     recipient, recipient_pid = open_pane("primary")
     bind("{ Mind nexus Secondary }", sender_pid)
     bind("{ Mind nexus Primary }", recipient_pid)
-    expect_send(sender, send_datom("{ Mind nexus Primary }", "Result.«mfUp message-flow passes»"), "Delivered")
+    before = cursor()
+    expect_send(sender, send_datom("Up", "Result.«mfUp message-flow passes»"), "Delivered")
+    trace_in_order("message-nexus", ["Identified", "ResolvedUp", "Locked", "Delivered"], before)
     pane_shows(recipient, "{ Mind nexus Secondary }")
     pane_shows(recipient, "Result.«mfUp message-flow passes»")
   '';

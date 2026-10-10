@@ -1,5 +1,5 @@
-# message-flow-claude — semi-sandbox: tests 15 and 16 of this repository
-# (14 and 15 of the Message design at Primary bae5545f), with real Claude Code flows on the cheapest model, launched by the real
+# message-flow-claude — semi-sandbox: tests 16 and 17 of the Message design
+# at Primary 9541cd08, with real Claude Code flows on the cheapest model, launched by the real
 # Flow Nexus, sent to by the real Message Nexus. It needs the living's Claude
 # login and the network, so it is a runner, never a check, and it refuses to
 # run unless MESSAGE_TEST_LIVE=1 is set.
@@ -11,10 +11,10 @@
 # Message's meta client persists the root's sockets and Message is restarted
 # on them; Flow is given the model of every layer.
 #
-# 15. Pending: it needs an asleep metaflow, and neither Flow's design at
-#     Primary 72418b11 nor the Message design names a request or event that
+# 16. Pending: it needs an asleep metaflow, and neither Flow's design at
+#     Primary e846c2ca nor the Message design names a request or event that
 #     puts a metaflow to sleep. It is reported PENDING and drives nothing.
-# 16. Forks, first option: F1, F4, F10; F6 no tiers,
+# 17. Forks, first option: F1, F4, F10; F6 no tiers,
 #     per design. An Order to the awake, working
 #     { Mind busy Secondary }: placed by Flow's rule (`Delivered` or `Queued`);
 #     the recipient's transcript holds the Order exactly once.
@@ -43,7 +43,7 @@ pkgs.writeShellApplication {
     herdr.package
   ];
 
-  meta.description = "Test 16 of message-test (test 15 pending): a Claude Code flow reached through Message and Flow (needs MESSAGE_TEST_LIVE=1).";
+  meta.description = "Test 17 of the Message design (test 16 pending): a Claude Code flow reached through Message and Flow (needs MESSAGE_TEST_LIVE=1).";
 
   text = ''
     if [ "''${MESSAGE_TEST_LIVE:-}" != 1 ]; then
@@ -144,7 +144,7 @@ pkgs.writeShellApplication {
       expect "flow meta Configure $layer" Configured flow-meta "Configure.Model.{ $layer $model }"
     done
 
-    test16() {
+    test17() {
       sender="$(openPane psyche-busy)"
       bindPane '{ Psyche busy Secondary }' "$sender"
       launched="$(flow 'Launch.{ { Mind busy Secondary } [ ] «Run the shell command sleep 30, then reply done.» }')"
@@ -168,10 +168,10 @@ pkgs.writeShellApplication {
     report() {
       if [ "$2" = 0 ]; then echo "$1: PASS"; else echo "$1: FAIL"; failed=1; fi
     }
-    echo "test15: PENDING (no designed way to put a metaflow to sleep)"
+    echo "test16: PENDING (no designed way to put a metaflow to sleep)"
     set +e
-    ( set -e; test16 )
-    report test16 $?
+    ( set -e; test17 )
+    report test17 $?
     set -e
     exit "$failed"
   '';

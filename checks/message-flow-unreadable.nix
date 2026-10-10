@@ -1,4 +1,4 @@
-# Test 14. An unreadable datom given to `message`: the CLI refuses it (a
+# Test 15. An unreadable datom given to `message`: the CLI refuses it (a
 # nonzero exit) and the Nexus trace shows no connection. A readable request
 # afterwards (an ordinary Configure, refused AlreadyConfigured) shows that the
 # Nexus trace does record a connection.

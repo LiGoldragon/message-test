@@ -1,4 +1,4 @@
-# Test 9. `message` run from a shell in no flow's pane (a Herdr pane bound to
+# Test 10. `message` run from a shell in no flow's pane (a Herdr pane bound to
 # no metaflow): `Refused.Unidentified.<pid>`.
 # Forks, first option: F8 (caller read from the kernel peer), F11
 # (senders that are no metaflow are refused Unidentified).

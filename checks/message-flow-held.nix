@@ -1,4 +1,4 @@
-# Test 10. A lock on M taken directly from Flow, then a send to M:
+# Test 11. A lock on M taken directly from Flow, then a send to M:
 # `Refused.Held.<lock>`, the request returned to its sender (never shown in
 # M's pane). The machine's clock is then set past the lock's Until (Flow
 # judges a lapse by comparing Until with now, on the next request), and the

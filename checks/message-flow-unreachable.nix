@@ -1,4 +1,4 @@
-# Test 11. Flow stopped, then a send: `Refused.FlowUnreachable`.
+# Test 12. Flow stopped, then a send: `Refused.FlowUnreachable`.
 # Forks, first option: F2 (the Flow edge is Flow's ordinary socket).
 # F6: no tiers, per design (the request carries no priority head).
 {
