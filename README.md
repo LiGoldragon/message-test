@@ -7,20 +7,26 @@ flake inputs whose `nixpkgs` follows this flake's.
 The scenarios are written to two designs in the Primary repository
 (github:LiGoldragon/primary):
 
-- Message: `flows/73ada7/reports/build/message-design.md` at 3a4bbb61
-  (blob 1a211b88),
-  sections 3 to 9; tests are numbered as its section 9 numbers them.
-- Flow: `flows/f5a6e9/reports/flow-buildable-design.md` at e846c2ca
-  (blob d45c1d45), section 1.
+- Message: `flows/73ada7/reports/build/message-design.md` at e275b6bd
+  (blob 66d3fdcf), sections 3 to 9; tests are numbered as its section 9
+  numbers them.
+- Flow: `flows/f5a6e9/reports/flow-buildable-design.md` at 9613a573
+  (blob d7ff15a0), sections 1 and 2.
 
 From them: an Address written short, `{ Mind nexus Secondary }`; the send
 `Send.{ Recipient Request }`, Recipient being Flow's
-`Recipient.[ Address Up ]`, written as the Message design writes it, `Send.{ { Mind nexus Secondary } Order.«…» }` or
-`Send.{ Up Result.«…» }`. On Flow: `Lock.Recipient`, the Address form
-written `Lock.{ Mind nexus Secondary }`; Flow resolves `Up` on the lock
-itself, answering `Locked.Lock` with the resolved Address or refusing
-`NoneAbove` at the top layer; `Bind.{ Address Process }` with Process
-`{ Pid Started }`, `End.Address` and `Current.Address`.
+`Recipient.[ Address Up ]`, written as the Message design writes it,
+`Send.{ { Mind nexus Secondary } Order.«…» }` or `Send.{ Up Result.«…» }`.
+On Flow: the lock request `Lock.{ Sender Recipient }`, written
+`Lock.{ { Psyche nexus Secondary } { Mind nexus Secondary } }`, answered
+`Locked.Lock` with the Lock `{ Sender Address Until }`; Flow resolves `Up`
+relative to the sender and refuses `OffRoute` and `NoneAbove` at the lock
+request. `Deliver.{ Lock Request }` and `Release.Lock` carry that Lock; one
+delivery per lock; the lease is 60 seconds by default. `Bind.{ Address
+Process }` with Process `{ Pid Started }`, answered `Bound.FlowId`;
+`Stop.FlowId` leaves the metaflow Asleep; `End.Address`, `Current.Address`
+and `Metaflows`. The design writes no print of `Unknown.[ Address Lock ]`,
+so those refusals are matched by their head.
 
 Where the Message design leaves a fork to the living (its section 12), each
 scenario is written against the fork's first option and names that fork
@@ -47,8 +53,8 @@ Test unpushed code with `--override-input message path:<checkout>` or
     lib/message-flow.nix            the frame of a pure scenario: one VM, three user services
     lib/message-flow.py             the frame's helpers: configure, panes, Bind, send, trace
     checks/herdr.nix                the rig: headless Herdr in the VM
-    checks/message-flow-*.nix       tests 1 to 15, one per file, 2 pending
-    packages/message-flow-claude.nix tests 16 and 17, semi-sandbox, 16 pending
+    checks/message-flow-*.nix       tests 1 to 20, one per file, 18 pending
+    packages/message-flow-claude.nix tests 21 and 22, semi-sandbox
     fixtures/message-flow/          the meta Configure payloads
     checks/lint.nix, formatter.nix  style gate
 
@@ -57,10 +63,10 @@ Test unpushed code with `--override-input message path:<checkout>` or
 | # | check | forks | drive | expect |
 |---|---|---|---|---|
 | 1 | message-flow-delivered | F2 F4 F6* F8 F9 F10 | Order to awake { Mind nexus Secondary } | Delivered; trace Identified, Locked, Delivered; pane shows sender and request; lock gone |
-| 2 | pending | F1 F6* F8 | Notice to asleep metaflow | Queued. No design names how a metaflow falls asleep |
+| 2 | message-flow-queued | F1 F6* F8 | Notice to a metaflow asleep after Stop | Queued; Current.Asleep; Metaflows shows the Notice queued once |
 | 3 | message-flow-unknown | F6* F8 | send to no such metaflow | Refused.Unknown.…; no lock record |
 | 4 | message-flow-ended | F6* F8 | send to Ended metaflow | Refused.Ended.… |
-| 5 | message-flow-off-route | F2 F6* F8 | Field Tertiary to Psyche Primary | Refused.OffRoute; lock released |
+| 5 | message-flow-off-route | F2 F6* F8 | Field Tertiary to Psyche Primary | Refused.OffRoute from the lock; no lock record; no Deliver or Release traced |
 | 6 | message-flow-same-layer | F4 F6* F8 F10 | Field Secondary to Mind Secondary | Delivered |
 | 7 | message-flow-above | F4 F6* F8 F10 | Mind Secondary to { Mind nexus Primary } | Delivered to Mind Primary |
 | 8 | message-flow-up | F4 F6* F7* F8 F10 | Up from Mind Secondary | trace Identified, Locked carrying { Mind nexus Primary }, Delivered; delivered to Mind Primary |
@@ -71,8 +77,13 @@ Test unpushed code with `--override-input message path:<checkout>` or
 | 13 | message-flow-first-configure | F2 | ordinary, meta, ordinary Configure | Configured, Configured, Refused.AlreadyConfigured |
 | 14 | message-flow-restart | F2 F6* F8 | Message restarted with no arguments | send Delivered, no new Configure |
 | 15 | message-flow-unreadable | — | unreadable datom to `message` | CLI refuses; no connection traced |
-| 16 | message-flow-claude, pending | F1 F4 F6* F10 | Notice then Order to asleep Claude metaflow | Queued, Woken. No design names how a metaflow falls asleep |
-| 17 | message-flow-claude | F1 F4 F6* F10 | Order to working Claude flow | placed by Flow's rule; transcript holds it once |
+| 16 | message-flow-unknown-lock | F2 | Flow Deliver under a lock never granted | Refused.Unknown.… |
+| 17 | message-flow-release | F2 | Release after Deliver; of a lapsed lock; of a lock never granted | Refused.Unknown.…; Refused.Lapsed; Refused.Unknown.… |
+| 18 | pending | — | a Flow stand-in answers Locked with an Until already past, then a send | Refused.Lapsed. No component or design gives the stand-in |
+| 19 | message-flow-held-end | F2 | End of M under a lock taken directly, then after Release | Refused.Held.…, then Ended |
+| 20 | message-flow-lease | F2 | Flow with no Lease, then a lock | Until 60 seconds past the grant |
+| 21 | message-flow-claude | F1 F4 F6* F10 | Notice then Order to a Claude metaflow asleep after Stop | Queued, Woken; first prompt ends with the queue, Order last |
+| 22 | message-flow-claude | F1 F4 F6* F10 | Order to working Claude flow | placed by Flow's rule; transcript holds it once |
 
 F6* is not its first option: no tiers, per design. The request carries no
 priority head (`Send.{ { Mind nexus Secondary } Order.«…» }`).

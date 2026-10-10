@@ -92,10 +92,30 @@ def open_pane(label):
 
 
 # Bind.{ Address Process }: Process is the pid and the kernel's start time of
-# that pid (field 22 of /proc/<pid>/stat, clock ticks since boot).
+# that pid (field 22 of /proc/<pid>/stat, clock ticks since boot). Answered
+# Bound.FlowId; the flow id is returned.
 def bind(address, pid):
     started = machine.succeed(f"cut -d' ' -f22 /proc/{pid}/stat").strip()
-    expect_prefix(f"Bind {address}", f"flow-meta 'Bind.{{ {address} {{ {pid} {started} }} }}'", "Bound.")
+    bound_reply = expect_prefix(f"Bind {address}", f"flow-meta 'Bind.{{ {address} {{ {pid} {started} }} }}'", "Bound.")
+    return bound_reply[len("Bound."):]
+
+
+# Flow's lock request Lock.{ Sender Recipient }, the Recipient's Address form
+# written short: `Lock.{ { Psyche nexus Secondary } { Mind nexus Secondary } }`.
+# Answered Locked.Lock, the Lock being `{ Sender Address Until }`.
+def flow_lock(sender, recipient):
+    status, got = run(f"flow 'Lock.{{ {sender} {recipient} }}'")
+    print(f"Lock.{{ {sender} {recipient} }}: «{got}» (exit {status})")
+    return got
+
+
+def lock_of(locked):
+    assert locked.startswith("Locked."), f"expected «Locked.…», got «{locked}»"
+    return locked[len("Locked."):]
+
+
+def now():
+    return int(machine.succeed("date +%s").strip())
 
 
 # Send.{ Recipient Request }, Recipient.[ Address Up ] from Flow's Library,

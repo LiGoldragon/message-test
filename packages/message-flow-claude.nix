@@ -1,5 +1,5 @@
-# message-flow-claude — semi-sandbox: tests 16 and 17 of the Message design
-# at Primary 3a4bbb61, with real Claude Code flows on the cheapest model, launched by the real
+# message-flow-claude — semi-sandbox: tests 21 and 22 of the Message design
+# at Primary e275b6bd, with real Claude Code flows on the cheapest model, launched by the real
 # Flow Nexus, sent to by the real Message Nexus. It needs the living's Claude
 # login and the network, so it is a runner, never a check, and it refuses to
 # run unless MESSAGE_TEST_LIVE=1 is set.
@@ -11,10 +11,12 @@
 # Message's meta client persists the root's sockets and Message is restarted
 # on them; Flow is given the model of every layer.
 #
-# 16. Pending: it needs an asleep metaflow, and neither Flow's design at
-#     Primary e846c2ca nor the Message design names a request or event that
-#     puts a metaflow to sleep. It is reported PENDING and drives nothing.
-# 17. Forks, first option: F1, F4, F10; F6 no tiers,
+# 21. Forks, first option: F1, F4, F10; F6 no tiers,
+#     per design. A Notice, then an Order, to an
+#     asleep { Mind wake Secondary } (launched, then its flow stopped, which
+#     leaves it Asleep): `Queued`, then `Woken`; the woken flow's first prompt
+#     ends with `[ Notice.«…» Order.«…» ]`, the Order last.
+# 22. Forks, first option: F1, F4, F10; F6 no tiers,
 #     per design. An Order to the awake, working
 #     { Mind busy Secondary }: placed by Flow's rule (`Delivered` or `Queued`);
 #     the recipient's transcript holds the Order exactly once.
@@ -43,7 +45,7 @@ pkgs.writeShellApplication {
     herdr.package
   ];
 
-  meta.description = "Test 17 of the Message design (test 16 pending): a Claude Code flow reached through Message and Flow (needs MESSAGE_TEST_LIVE=1).";
+  meta.description = "Tests 21 and 22 of the Message design: Claude Code flows woken and reached through Message and Flow (needs MESSAGE_TEST_LIVE=1).";
 
   text = ''
     if [ "''${MESSAGE_TEST_LIVE:-}" != 1 ]; then
@@ -144,7 +146,32 @@ pkgs.writeShellApplication {
       expect "flow meta Configure $layer" Configured flow-meta "Configure.Model.{ $layer $model }"
     done
 
-    test17() {
+    test21() {
+      sender="$(openPane psyche-wake)"
+      bindPane '{ Psyche wake Secondary }' "$sender"
+      launched="$(flow 'Launch.{ { Mind wake Secondary } [ ] «Reply with the word ok, then stop.» }')"
+      echo "Launch: «$launched»"
+      case "$launched" in Launched.*) ;; *) return 1 ;; esac
+      expect "Stop" Stopped flow "Stop.''${launched#Launched.}"
+      expect "Current before" Current.Asleep flow 'Current.{ Mind wake Secondary }'
+      reply="$(sendFrom "$sender" 'Send.{ { Mind wake Secondary } Notice.«mfWake branch merged» }')"
+      [ "$reply" = Queued ] || { echo "Notice: «$reply», expected «Queued»" >&2; return 1; }
+      reply="$(sendFrom "$sender" 'Send.{ { Mind wake Secondary } Order.«mfWake reply ok» }')"
+      [ "$reply" = Woken ] || { echo "Order: «$reply», expected «Woken»" >&2; return 1; }
+      for _ in $(seq 1 600); do
+        transcript="$(transcriptOf)"
+        [ -n "$transcript" ] && grep -q mfWake "$transcript" && break
+        sleep 0.5
+      done
+      first="$(jq -rs '[.[] | select(.type == "user")][0].message.content | if type == "string" then . else map(.text // "") | join("") end' "$transcript")"
+      echo "first prompt ends: «''${first: -120}»"
+      case "$first" in
+        *'[ Notice.«mfWake branch merged» Order.«mfWake reply ok» ]') ;;
+        *) echo "the woken flow's first prompt does not end with the drained queue, the Order last" >&2; return 1 ;;
+      esac
+    }
+
+    test22() {
       sender="$(openPane psyche-busy)"
       bindPane '{ Psyche busy Secondary }' "$sender"
       launched="$(flow 'Launch.{ { Mind busy Secondary } [ ] «Run the shell command sleep 30, then reply done.» }')"
@@ -168,10 +195,11 @@ pkgs.writeShellApplication {
     report() {
       if [ "$2" = 0 ]; then echo "$1: PASS"; else echo "$1: FAIL"; failed=1; fi
     }
-    echo "test16: PENDING (no designed way to put a metaflow to sleep)"
     set +e
-    ( set -e; test17 )
-    report test17 $?
+    ( set -e; test21 )
+    report test21 $?
+    ( set -e; test22 )
+    report test22 $?
     set -e
     exit "$failed"
   '';
