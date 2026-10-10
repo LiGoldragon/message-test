@@ -1,7 +1,9 @@
 # Message: the Message Nexus and its `message` / `message-meta` clients, taken
 # from the `message` input. The Nexus starts with no arguments; its default
-# configuration is relative to XDG_RUNTIME_DIR (sockets) and HOME (store).
-# Every path below is the Message design's (73ada7 message-design, section 3).
+# configuration is relative to XDG_RUNTIME_DIR (sockets) and HOME (store),
+# and its clients read the same defaults. Every path below is the Message
+# design's at Primary bae5545f, flows/73ada7/reports/build/message-design.md,
+# section 3.
 { inputs }:
 {
   forSystem = system: rec {

@@ -1,5 +1,5 @@
-# message-flow-claude — semi-sandbox: tests 15 and 16 of the Message design,
-# with real Claude Code flows on the cheapest model, launched by the real
+# message-flow-claude — semi-sandbox: tests 15 and 16 of this repository
+# (14 and 15 of the Message design at Primary bae5545f), with real Claude Code flows on the cheapest model, launched by the real
 # Flow Nexus, sent to by the real Message Nexus. It needs the living's Claude
 # login and the network, so it is a runner, never a check, and it refuses to
 # run unless MESSAGE_TEST_LIVE=1 is set.
@@ -7,14 +7,13 @@
 # A fresh short root (removed in an exit trap) holds HOME and
 # XDG_RUNTIME_DIR; only ~/.claude/.credentials.json is copied in. A headless
 # Herdr server, flow-nexus and message-nexus start on that root with no
-# arguments and are configured by their meta clients: Message with the
-# root's sockets, Flow with the model of every layer.
+# arguments; each client reaches its Nexus at the defaults they share.
+# Message's meta client persists the root's sockets and Message is restarted
+# on them; Flow is given the model of every layer.
 #
-# 15. Forks, first option: F1, F4, F10; F6 no tiers,
-#     per design. A Notice, then an Order, to an
-#     asleep { Mind wake Secondary } (launched, then its pane closed): `Queued`,
-#     then `Woken`; the woken flow's first prompt ends with
-#     `[ Notice.«…» Order.«…» ]`, the Order last.
+# 15. Pending: it needs an asleep metaflow, and neither Flow's design at
+#     Primary 72418b11 nor the Message design names a request or event that
+#     puts a metaflow to sleep. It is reported PENDING and drives nothing.
 # 16. Forks, first option: F1, F4, F10; F6 no tiers,
 #     per design. An Order to the awake, working
 #     { Mind busy Secondary }: placed by Flow's rule (`Delivered` or `Queued`);
@@ -37,13 +36,14 @@ pkgs.writeShellApplication {
     pkgs.coreutils
     pkgs.findutils
     pkgs.gnugrep
+    pkgs.iproute2
     pkgs.jq
     message.package
     flow.package
     herdr.package
   ];
 
-  meta.description = "Tests 15 and 16 of the Message design: Claude Code flows woken and reached through Message and Flow (needs MESSAGE_TEST_LIVE=1).";
+  meta.description = "Test 16 of message-test (test 15 pending): a Claude Code flow reached through Message and Flow (needs MESSAGE_TEST_LIVE=1).";
 
   text = ''
     if [ "''${MESSAGE_TEST_LIVE:-}" != 1 ]; then
@@ -74,14 +74,17 @@ pkgs.writeShellApplication {
     RUST_LOG=debug ${message.nexus} 2> "$root/message-nexus.log" &
     pids+=($!)
 
-    for socket in ${message.ordinarySocket} ${message.metaSocket} ${flow.ordinarySocket} ${flow.metaSocket}; do
+    for _ in $(seq 1 100); do herdr workspace list > /dev/null 2>&1 && break; sleep 0.1; done
+
+    # bound <socket>: true once a process listens on it.
+    bound() {
       for _ in $(seq 1 100); do
-        [ -S "$XDG_RUNTIME_DIR/$socket" ] && break
+        ss -xlpn | grep -qF " $1 " && return 0
         sleep 0.1
       done
-      [ -S "$XDG_RUNTIME_DIR/$socket" ] || { echo "message-flow-claude: $socket never bound" >&2; exit 1; }
-    done
-    for _ in $(seq 1 100); do herdr workspace list > /dev/null 2>&1 && break; sleep 0.1; done
+      echo "message-flow-claude: no process listens on $1" >&2
+      return 1
+    }
 
     # expect <label> <reply> <command...>: the whole stdout must equal <reply>.
     expect() {
@@ -121,37 +124,25 @@ pkgs.writeShellApplication {
       find "$HOME/.claude/projects" -name '*.jsonl' -printf '%T@ %p\n' 2>/dev/null | sort -n | tail -1 | cut -d' ' -f2-
     }
 
-    expect "message meta Configure" Configured \
-      message-meta "${message.configuration "$XDG_RUNTIME_DIR"}"
+    # Message persists its payload, answers Configured or RestartRequired, and
+    # is restarted with no arguments on its store.
+    for _ in $(seq 1 100); do
+      configured="$(timeout 30 message-meta "${message.configuration "$XDG_RUNTIME_DIR"}" 2>&1)" || true
+      case "$configured" in Configured | RestartRequired) break ;; esac
+      sleep 0.1
+    done
+    echo "message meta Configure: «$configured»"
+    case "$configured" in Configured | RestartRequired) ;; *) exit 1 ;; esac
+    kill "''${pids[2]}"
+    wait "''${pids[2]}" 2>/dev/null || true
+    RUST_LOG=debug ${message.nexus} 2>> "$root/message-nexus.log" &
+    pids[2]=$!
+    for socket in ${message.ordinarySocket} ${message.metaSocket} ${flow.ordinarySocket}; do
+      bound "$XDG_RUNTIME_DIR/$socket" || exit 1
+    done
     for layer in Primary Secondary Tertiary Quaternary; do
       expect "flow meta Configure $layer" Configured flow-meta "Configure.Model.{ $layer $model }"
     done
-
-    test15() {
-      sender="$(openPane psyche-wake)"
-      bindPane '{ Psyche wake Secondary }' "$sender"
-      launched="$(flow 'Launch.{ { Mind wake Secondary } [ ] «Reply with the word ok, then stop.» }')"
-      echo "Launch: «$launched»"
-      case "$launched" in Launched.*) ;; *) return 1 ;; esac
-      recipient="$(herdr pane list | jq -r --arg s "$sender" '.result.panes[] | select(.pane_id != $s) | .pane_id' | tail -1)"
-      herdr pane close "$recipient"
-      expect "Current before" Current.Asleep flow 'Current.{ Mind wake Secondary }'
-      reply="$(sendFrom "$sender" 'Send.{ Address.{ Mind wake Secondary } Notice.«mfWake branch merged» }')"
-      [ "$reply" = Queued ] || { echo "Notice: «$reply», expected «Queued»" >&2; return 1; }
-      reply="$(sendFrom "$sender" 'Send.{ Address.{ Mind wake Secondary } Order.«mfWake reply ok» }')"
-      [ "$reply" = Woken ] || { echo "Order: «$reply», expected «Woken»" >&2; return 1; }
-      for _ in $(seq 1 600); do
-        transcript="$(transcriptOf)"
-        [ -n "$transcript" ] && grep -q mfWake "$transcript" && break
-        sleep 0.5
-      done
-      first="$(jq -rs '[.[] | select(.type == "user")][0].message.content | if type == "string" then . else map(.text // "") | join("") end' "$transcript")"
-      echo "first prompt ends: «''${first: -120}»"
-      case "$first" in
-        *'[ Notice.«mfWake branch merged» Order.«mfWake reply ok» ]') ;;
-        *) echo "the woken flow's first prompt does not end with the drained queue, the Order last" >&2; return 1 ;;
-      esac
-    }
 
     test16() {
       sender="$(openPane psyche-busy)"
@@ -164,7 +155,7 @@ pkgs.writeShellApplication {
         [ -n "$transcript" ] && grep -q '"tool_use"' "$transcript" && break
         sleep 0.5
       done
-      reply="$(sendFrom "$sender" 'Send.{ Address.{ Mind busy Secondary } Order.«mfBusy reply received» }')"
+      reply="$(sendFrom "$sender" 'Send.{ { Mind busy Secondary } Order.«mfBusy reply received» }')"
       case "$reply" in Delivered | Queued) ;; *) echo "Order: «$reply»" >&2; return 1 ;; esac
       for _ in $(seq 1 1200); do grep -q mfBusy "$transcript" && break; sleep 0.5; done
       count="$(jq -s '[.[] | select(.type == "user") | tostring | select(test("mfBusy"))] | length' "$transcript")"
@@ -177,9 +168,8 @@ pkgs.writeShellApplication {
     report() {
       if [ "$2" = 0 ]; then echo "$1: PASS"; else echo "$1: FAIL"; failed=1; fi
     }
+    echo "test15: PENDING (no designed way to put a metaflow to sleep)"
     set +e
-    ( set -e; test15 )
-    report test15 $?
     ( set -e; test16 )
     report test16 $?
     set -e

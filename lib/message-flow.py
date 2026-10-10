@@ -37,20 +37,44 @@ def expect_prefix(label, command, want):
     return got
 
 
+# The Nexuses start with no arguments, so each binds the sockets of its own
+# default configuration and its clients look there too (Message design,
+# sections 3 and 5): the frame names no socket until a payload names one.
+def listening(executable):
+    machine.wait_until_succeeds(f"ss -xlpn | grep -q '\"{executable}\"'", timeout=60)
+
+
 def start():
     machine.wait_for_unit("user@1000.service")
     for unit in ["message-nexus.service", "flow-nexus.service", "herdr.service"]:
         machine.wait_for_unit(unit, user="alice")
     machine.wait_until_succeeds(as_alice("herdr workspace list"), timeout=60)
-    for socket in ["message/message.sock", "message/message-meta.sock", "flow/flow.sock", "flow/flow-meta.sock"]:
-        status, _ = machine.execute(f"timeout 30 sh -c 'until test -S {RUNTIME}/{socket}; do sleep 0.2; done'")
-        bound = machine.succeed(f"ls {RUNTIME}/message {RUNTIME}/flow 2>&1 || true")
-        assert status == 0, f"{socket} never bound; bound under {RUNTIME}:\n{bound}"
+    listening("message-nexus")
+    listening("flow-nexus")
 
 
+# A socket counts as bound when a process listens on it, so a socket file
+# left by the Nexus before its restart does not count.
+def bound(socket):
+    status, _ = machine.execute(f"timeout 30 sh -c 'until ss -xlpn | grep -qF \" {socket} \"; do sleep 0.2; done'")
+    listed = machine.succeed("ss -xlpn || true")
+    assert status == 0, f"no process listens on {socket}; listening:\n{listed}"
+
+
+# Message's payload is persisted by its meta client, answered Configured, or
+# RestartRequired when a socket path changed. Message is then restarted with
+# no arguments, so it serves from the store whatever it answered, and the
+# sockets the payload names must be bound. Flow's model payloads change no
+# socket.
 def configure():
     payload = f"{FIXTURES}/message.datom"
-    expect("message meta Configure", f'message-meta "$(cat {payload})"', "Configured")
+    status, got = run(f'message-meta "$(cat {payload})"')
+    print(f"message meta Configure: «{got}» (exit {status})")
+    assert got in ("Configured", "RestartRequired"), f"message meta Configure: expected «Configured» or «RestartRequired», got «{got}»"
+    status, out = run("systemctl --user restart message-nexus.service")
+    assert status == 0, f"restarting message-nexus: {out}"
+    for socket in machine.succeed(f"cat {payload}").split()[1:4]:
+        bound(socket.strip("{}"))
     for layer in ["primary", "secondary", "tertiary", "quaternary"]:
         payload = f"{FIXTURES}/flow/model-{layer}.datom"
         expect(f"flow meta Configure {layer}", f'flow-meta "$(cat {payload})"', "Configured")
@@ -74,12 +98,11 @@ def bind(address, pid):
     expect_prefix(f"Bind {address}", f"flow-meta 'Bind.{{ {address} {{ {pid} {started} }} }}'", "Bound.")
 
 
-# Send.{ Recipient.[ Address Up ] Request }: an address is written as the
-# Recipient variant `Address.{ Mind nexus Secondary }`, a send up as `Up`.
+# Send.{ Address Request }, the address written short:
+# `Send.{ { Mind nexus Secondary } Order.«…» }` (Message design, section 5).
 # Fork F6: no tiers, per design. The request carries no priority head.
-def send_datom(recipient, request):
-    target = recipient if recipient == "Up" else f"Address.{recipient}"
-    return f"Send.{{ {target} {request} }}"
+def send_datom(address, request):
+    return f"Send.{{ {address} {request} }}"
 
 
 def send_from(pane, datom):

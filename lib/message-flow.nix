@@ -3,7 +3,7 @@
 # with no arguments: the real Message Nexus, the real Flow Nexus, and a
 # headless Herdr server whose panes are plain shells. Both Nexuses are
 # configured by their meta clients from the payload files in
-# fixtures/message-flow. The scenario supplies its name, the design forks
+# fixtures/message-flow; Message is restarted on its persisted configuration. The scenario supplies its name, the design forks
 # whose first option it is written against, and its drive (Python, using
 # the helpers of message-flow.py).
 {
@@ -45,6 +45,7 @@ pkgs.testers.runNixOSTest {
       message.package
       flow.package
       herdr.package
+      pkgs.iproute2
       pkgs.jq
     ];
 

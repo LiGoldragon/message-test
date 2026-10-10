@@ -22,10 +22,9 @@ flake.lib.messageFlow { inherit pkgs flake system; } {
     recipient, recipient_pid = open_pane("mind")
     bind("{ Psyche nexus Secondary }", sender_pid)
     bind("{ Mind nexus Secondary }", recipient_pid)
-    machine.succeed(f"touch {RUNTIME}/restart-mark")
     status, out = run("systemctl --user restart message-nexus.service")
     assert status == 0, f"restarting message-nexus: {out}"
-    machine.wait_until_succeeds(f"test {RUNTIME}/message/message.sock -nt {RUNTIME}/restart-mark", timeout=30)
+    bound(f"{RUNTIME}/message/message.sock")
     pid = run("systemctl --user show -p MainPID --value message-nexus.service")[1]
     arguments = machine.succeed(f"tr '\\0' '\\n' < /proc/{pid}/cmdline").split()
     assert len(arguments) == 1, f"message-nexus restarted with arguments {arguments}"

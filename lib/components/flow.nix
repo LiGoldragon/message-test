@@ -1,8 +1,9 @@
 # Flow: the Flow Nexus and its `flow` / `flow-meta` clients, taken from the
-# `flow` input. The Nexus starts with no arguments; sockets under
-# XDG_RUNTIME_DIR, store under HOME. Requests are Flow's design at e17a62ca
-# (f5a6e9 flow-buildable-design): Lock, Identify, Deliver, Release, Current,
-# End and Launch on the ordinary socket; Configure and Bind on the meta socket.
+# `flow` input. The Nexus starts with no arguments and its clients reach it
+# at its default sockets. Requests are Flow's design at Primary 72418b11,
+# flows/f5a6e9/reports/flow-buildable-design.md: Lock, Identify, Deliver,
+# Release, Current and End on the flow socket; Configure and Bind on the meta
+# socket.
 { inputs }:
 {
   forSystem = system: rec {
@@ -12,9 +13,9 @@
     client = "${package}/bin/flow";
     metaClient = "${package}/bin/flow-meta";
 
+    # The Flow edge Message's configuration names, relative to
+    # XDG_RUNTIME_DIR (Message design, section 3).
     ordinarySocket = "flow/flow.sock";
-    metaSocket = "flow/flow-meta.sock";
-    store = ".local/state/flow/flow.sema";
 
     # One meta Configure payload per layer: the layer's model.
     modelPayload = layer: model: "Configure.Model.{ ${layer} ${model} }";
