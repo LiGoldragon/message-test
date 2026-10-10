@@ -98,7 +98,8 @@ def bind(address, pid):
     expect_prefix(f"Bind {address}", f"flow-meta 'Bind.{{ {address} {{ {pid} {started} }} }}'", "Bound.")
 
 
-# Send.{ Recipient.[ Address Up ] Request }, written as the Message design
+# Send.{ Recipient Request }, Recipient.[ Address Up ] from Flow's Library,
+# written as the Message design
 # writes it: the Address variant short, `Send.{ { Mind nexus Secondary }
 # Order.«…» }` (section 5), and a send up `Send.{ Up Order.«…» }` (7.4).
 # Fork F6: no tiers, per design. The request carries no priority head.

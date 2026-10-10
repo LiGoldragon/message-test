@@ -1,5 +1,5 @@
 # message-flow-claude — semi-sandbox: tests 16 and 17 of the Message design
-# at Primary 9541cd08, with real Claude Code flows on the cheapest model, launched by the real
+# at Primary 3a4bbb61, with real Claude Code flows on the cheapest model, launched by the real
 # Flow Nexus, sent to by the real Message Nexus. It needs the living's Claude
 # login and the network, so it is a runner, never a check, and it refuses to
 # run unless MESSAGE_TEST_LIVE=1 is set.
