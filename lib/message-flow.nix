@@ -4,9 +4,10 @@
 # with Start.{ ordinary meta } under her runtime directory, and a
 # headless Herdr server whose panes are plain shells. Both Nexuses are
 # configured by their meta clients from the payload files in
-# fixtures/message-flow; Message is restarted on its persisted configuration. The scenario supplies its name, the design forks
+# fixtures/message-flow; Message is restarted on its persisted configuration.
+# The scenario supplies its name, the design forks
 # whose first option it is written against, and its drive (Python, using
-# the helpers of message-flow.py).
+# the helpers of message-flow.py), and any packages it alone needs.
 {
   pkgs,
   flake,
@@ -16,6 +17,7 @@
   name,
   forks,
   script,
+  packages ? [ ],
 }:
 let
   message = flake.lib.components.message.forSystem system;
@@ -42,7 +44,7 @@ pkgs.testers.runNixOSTest {
       linger = true;
     };
 
-    environment.systemPackages = [
+    environment.systemPackages = packages ++ [
       message.package
       flow.package
       herdr.package

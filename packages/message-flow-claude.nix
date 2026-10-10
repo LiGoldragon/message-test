@@ -1,5 +1,5 @@
-# message-flow-claude — semi-sandbox: tests 21 and 22 of the Message design
-# at Primary e275b6bd, with real Claude Code flows on the cheapest model, launched by the real
+# message-flow-claude — semi-sandbox: tests 22 and 23 of the Message design
+# at Primary 4dc4f864, with real Claude Code flows on the cheapest model, launched by the real
 # Flow Nexus, sent to by the real Message Nexus. It needs the living's Claude
 # login and the network, so it is a runner, never a check, and it refuses to
 # run unless MESSAGE_TEST_LIVE=1 is set.
@@ -12,12 +12,12 @@
 # Message's meta client persists the root's sockets and Message is restarted
 # on them; Flow is given the model of every layer.
 #
-# 21. Forks, first option: F1, F4, F10; F6 no tiers,
+# 22. Forks, first option: F1, F4, F10; F6 no tiers,
 #     per design. A Notice, then an Order, to an
 #     asleep { Mind wake Secondary } (launched, then its flow stopped, which
 #     leaves it Asleep): `Queued`, then `Woken`; the woken flow's first prompt
 #     ends with `[ Notice.«…» Order.«…» ]`, the Order last.
-# 22. Forks, first option: F1, F4, F10; F6 no tiers,
+# 23. Forks, first option: F1, F4, F10; F6 no tiers,
 #     per design. An Order to the awake, working
 #     { Mind busy Secondary }: placed by Flow's rule (`Delivered` or `Queued`);
 #     the recipient's transcript holds the Order exactly once.
@@ -48,7 +48,7 @@ pkgs.writeShellApplication {
     herdr.package
   ];
 
-  meta.description = "Tests 21 and 22 of the Message design: Claude Code flows woken and reached through Message and Flow (needs MESSAGE_TEST_LIVE=1).";
+  meta.description = "Tests 22 and 23 of the Message design: Claude Code flows woken and reached through Message and Flow (needs MESSAGE_TEST_LIVE=1).";
 
   text = ''
     if [ "''${MESSAGE_TEST_LIVE:-}" != 1 ]; then
@@ -225,7 +225,7 @@ pkgs.writeShellApplication {
     nexus="$nexus $(string "$XDG_RUNTIME_DIR/${message.ordinarySocket}") 60 }"
     expect "flow meta Configure Nexus" Configured flow-meta "$nexus"
 
-    test21() {
+    test22() {
       sender="$(openPane psyche-wake)"
       bindPane '{ Psyche wake Secondary }' "$sender"
       launched="$(flow 'Launch.{ { Mind wake Secondary } [ ] «Reply with the word ok, then stop.» }')"
@@ -250,7 +250,7 @@ pkgs.writeShellApplication {
       esac
     }
 
-    test22() {
+    test23() {
       sender="$(openPane psyche-busy)"
       bindPane '{ Psyche busy Secondary }' "$sender"
       launched="$(flow 'Launch.{ { Mind busy Secondary } [ ] «Run the shell command sleep 30, then reply done.» }')"
@@ -275,10 +275,10 @@ pkgs.writeShellApplication {
       if [ "$2" = 0 ]; then echo "$1: PASS"; else echo "$1: FAIL"; failed=1; fi
     }
     set +e
-    ( set -e; test21 )
-    report test21 $?
     ( set -e; test22 )
     report test22 $?
+    ( set -e; test23 )
+    report test23 $?
     set -e
     exit "$failed"
   '';

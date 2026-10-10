@@ -94,7 +94,7 @@ def open_pane(label):
 # that pid (field 22 of /proc/<pid>/stat, clock ticks since boot). Answered
 # Bound.FlowId; the flow id is returned.
 def bind(address, pid):
-    started = machine.succeed(f"cut -d' ' -f22 /proc/{pid}/stat").strip()
+    started = started_of(pid)
     bound_reply = expect_prefix(f"Bind {address}", f"flow-meta 'Bind.{{ {address} {{ {pid} {started} }} }}'", "Bound.")
     return bound_reply[len("Bound."):]
 
@@ -162,3 +162,18 @@ def trace_in_order(unit, words, after=None):
         found = text.find(word, position)
         assert found >= 0, f"{unit} trace lacks «{word}» after position {position}:\n{text}"
         position = found + len(word)
+
+
+# The kernel's start time of a pid, field 22 of /proc/<pid>/stat.
+def started_of(pid):
+    return machine.succeed(f"cut -d' ' -f22 /proc/{pid}/stat").strip()
+
+
+def main_pid(unit):
+    return run(f"systemctl --user show -p MainPID --value {unit}.service")[1]
+
+
+# Whether any process listens on a unix socket under the runtime directory
+# whose command is the given executable name.
+def listens(executable):
+    return machine.execute(f"ss -xlpn | grep -q '\"{executable}\"'")[0] == 0
