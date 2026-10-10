@@ -39,6 +39,7 @@ pkgs.testers.runNixOSTest {
         return machine.succeed("su -l alice -c " + shlex.quote(inner)).strip()
 
 
+    machine.wait_for_unit("user@1000.service")
     machine.wait_for_unit("herdr.service", user="alice")
     machine.wait_until_succeeds("su -l alice -c 'XDG_RUNTIME_DIR=/run/user/1000 herdr workspace list'", timeout=60)
     created = json.loads(alice("herdr workspace create --cwd /home/alice --label rig --no-focus"))

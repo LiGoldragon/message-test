@@ -37,6 +37,7 @@ def expect_prefix(label, command, want):
 
 
 def start():
+    machine.wait_for_unit("user@1000.service")
     for unit in ["message-nexus.service", "flow-nexus.service", "herdr.service"]:
         machine.wait_for_unit(unit, user="alice")
     machine.wait_until_succeeds(as_alice("herdr workspace list"), timeout=60)
