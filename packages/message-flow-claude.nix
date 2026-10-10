@@ -59,12 +59,7 @@ pkgs.writeShellApplication {
     # A short root: sun_path holds 108 bytes.
     root="$(mktemp -d /tmp/mt-XXXXXXXX)"
     pids=()
-    cleanup() {
-      for started in "''${pids[@]}"; do kill "$started" 2>/dev/null || true; done
-      herdr server stop > /dev/null 2>&1 || true
-      rm -rf "$root"
-    }
-    trap cleanup EXIT
+    trap 'kill "''${pids[@]}" 2>/dev/null || true; herdr server stop > /dev/null 2>&1 || true; rm -rf "$root"' EXIT
 
     export HOME="$root/home" XDG_RUNTIME_DIR="$root/run"
     mkdir -p "$HOME/.claude" "$XDG_RUNTIME_DIR"
