@@ -4,7 +4,8 @@
 # to sleep, so the precondition is asserted before the send. Flow's Signal at
 # e17a62ca has no query that shows a metaflow's Queue, so the queue's one
 # request is witnessed only by the semi-sandbox's wake (test 15).
-# Forks, first option: F1 (Flow holds the queue), F6, F8.
+# Forks, first option: F1 (Flow holds the queue), F8.
+# F6: no tiers, per design (the request carries no priority head).
 {
   pkgs,
   flake,
@@ -15,7 +16,7 @@ flake.lib.messageFlow { inherit pkgs flake system; } {
   name = "message-flow-queued";
   forks = [
     "F1"
-    "F6"
+    "F6 no tiers, per design"
     "F8"
   ];
   script = ''

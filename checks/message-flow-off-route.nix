@@ -1,7 +1,8 @@
 # Test 5. { Field nexus Tertiary } sends to { Psyche nexus Primary }, off the
 # vision-aspects routes: `Refused.OffRoute`; the recipient's pane never shows
 # the request; the lock is released (a direct Lock is granted).
-# Forks, first option: F2, F6, F8.
+# Forks, first option: F2, F8.
+# F6: no tiers, per design (the request carries no priority head).
 {
   pkgs,
   flake,
@@ -12,7 +13,7 @@ flake.lib.messageFlow { inherit pkgs flake system; } {
   name = "message-flow-off-route";
   forks = [
     "F2"
-    "F6"
+    "F6 no tiers, per design"
     "F8"
   ];
   script = ''

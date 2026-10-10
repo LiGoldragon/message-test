@@ -1,7 +1,8 @@
 # Test 8. `Up` from a Primary: `Refused.NoneAbove`, and Flow's trace shows no
 # Lock for it. A control send down to { Mind nexus Secondary } first shows
 # that Flow's trace does name Lock when Message asks for one.
-# Forks, first option: F6, F7 (Message resolves Up), F8.
+# Forks, first option: F7 (Message resolves Up), F8.
+# F6: no tiers, per design (the request carries no priority head).
 {
   pkgs,
   flake,
@@ -11,7 +12,7 @@
 flake.lib.messageFlow { inherit pkgs flake system; } {
   name = "message-flow-none-above";
   forks = [
-    "F6"
+    "F6 no tiers, per design"
     "F7"
     "F8"
   ];

@@ -74,10 +74,9 @@ def bind(address, pid):
     expect_prefix(f"Bind {address}", f"flow-meta 'Bind.{{ {address} {{ {pid} {started} }} }}'", "Bound.")
 
 
-# Fork F6, first option: vision-messaging's Priority is a head on the message
-# datom (this repository's reading: on the request). Soft unless given.
-def send_datom(recipient, request, priority="Soft"):
-    return f"Send.{{ {recipient} {priority}.{request} }}"
+# Fork F6: no tiers, per design. The request carries no priority head.
+def send_datom(recipient, request):
+    return f"Send.{{ {recipient} {request} }}"
 
 
 def send_from(pane, datom):

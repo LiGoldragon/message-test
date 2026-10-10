@@ -3,8 +3,9 @@
 # M's pane). The machine's clock is then set past the lock's Until (Flow
 # judges a lapse by comparing Until with now, on the next request), and the
 # same send is `Delivered`.
-# Forks, first option: F2, F3 (a refused send returns to its sender), F6,
+# Forks, first option: F2, F3 (a refused send returns to its sender),
 # F8.
+# F6: no tiers, per design (the request carries no priority head).
 {
   pkgs,
   flake,
@@ -16,7 +17,7 @@ flake.lib.messageFlow { inherit pkgs flake system; } {
   forks = [
     "F2"
     "F3"
-    "F6"
+    "F6 no tiers, per design"
     "F8"
   ];
   script = ''

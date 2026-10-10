@@ -3,8 +3,9 @@
 # Locked, Delivered in that order; the recipient's pane shows the sender and
 # the request; the lock is gone (a direct Lock on the recipient is granted).
 # Forks, first option: F2 (Lock and Deliver on Flow's ordinary socket), F4
-# (end of the prompt), F6 (Priority head), F8 (caller read from the kernel peer), F9 (the
+# (end of the prompt), F8 (caller read from the kernel peer), F9 (the
 # request a String in the Nexus), F10 (Flow textualizes into the pane).
+# F6: no tiers, per design (the request carries no priority head).
 {
   pkgs,
   flake,
@@ -16,7 +17,7 @@ flake.lib.messageFlow { inherit pkgs flake system; } {
   forks = [
     "F2"
     "F4"
-    "F6"
+    "F6 no tiers, per design"
     "F8"
     "F9"
     "F10"

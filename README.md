@@ -38,26 +38,25 @@ Test unpushed code with `--override-input message path:<checkout>` or
 
 | # | check | forks | drive | expect |
 |---|---|---|---|---|
-| 1 | message-flow-delivered | F2 F4 F6 F8 F9 F10 | Order to awake { Mind nexus Secondary } | Delivered; trace Identified, Locked, Delivered; pane shows sender and request; lock gone |
-| 2 | message-flow-queued | F1 F6 F8 | Notice to asleep metaflow | Queued; Current.Asleep |
-| 3 | message-flow-unknown | F6 F8 | send to no such metaflow | Refused.Unknown.…; no lock record |
-| 4 | message-flow-ended | F6 F8 | send to Ended metaflow | Refused.Ended.… |
-| 5 | message-flow-off-route | F2 F6 F8 | Field Tertiary to Psyche Primary | Refused.OffRoute; lock released |
-| 6 | message-flow-same-layer | F4 F6 F8 F10 | Field Secondary to Mind Secondary | Delivered |
-| 7 | message-flow-up | F4 F6 F7 F8 F10 | Up from Mind Secondary | delivered to Mind Primary |
-| 8 | message-flow-none-above | F6 F7 F8 | Up from a Primary | Refused.NoneAbove; no Lock in Flow's trace |
-| 9 | message-flow-unidentified | F6 F8 F11 | send from an unbound pane | Refused.Unidentified.… |
-| 10 | message-flow-held | F2 F3 F6 F8 | Lock taken directly, then send; clock past Until | Refused.Held.…, then Delivered |
-| 11 | message-flow-unreachable | F2 F6 | Flow stopped, then send | Refused.FlowUnreachable |
+| 1 | message-flow-delivered | F2 F4 F6* F8 F9 F10 | Order to awake { Mind nexus Secondary } | Delivered; trace Identified, Locked, Delivered; pane shows sender and request; lock gone |
+| 2 | message-flow-queued | F1 F6* F8 | Notice to asleep metaflow | Queued; Current.Asleep |
+| 3 | message-flow-unknown | F6* F8 | send to no such metaflow | Refused.Unknown.…; no lock record |
+| 4 | message-flow-ended | F6* F8 | send to Ended metaflow | Refused.Ended.… |
+| 5 | message-flow-off-route | F2 F6* F8 | Field Tertiary to Psyche Primary | Refused.OffRoute; lock released |
+| 6 | message-flow-same-layer | F4 F6* F8 F10 | Field Secondary to Mind Secondary | Delivered |
+| 7 | message-flow-up | F4 F6* F7 F8 F10 | Up from Mind Secondary | delivered to Mind Primary |
+| 8 | message-flow-none-above | F6* F7 F8 | Up from a Primary | Refused.NoneAbove; no Lock in Flow's trace |
+| 9 | message-flow-unidentified | F6* F8 F11 | send from an unbound pane | Refused.Unidentified.… |
+| 10 | message-flow-held | F2 F3 F6* F8 | Lock taken directly, then send; clock past Until | Refused.Held.…, then Delivered |
+| 11 | message-flow-unreachable | F2 F6* | Flow stopped, then send | Refused.FlowUnreachable |
 | 12 | message-flow-first-configure | F2 | ordinary, meta, ordinary Configure | Configured, Configured, Refused.AlreadyConfigured |
-| 13 | message-flow-restart | F2 F6 F8 | Message restarted with no arguments | send Delivered, no new Configure |
+| 13 | message-flow-restart | F2 F6* F8 | Message restarted with no arguments | send Delivered, no new Configure |
 | 14 | message-flow-unreadable | — | unreadable datom to `message` | CLI refuses; no connection traced |
-| 15 | message-flow-claude | F1 F4 F6 F10 | Notice then Order to asleep Claude metaflow | Queued, Woken; first prompt ends with the queue, Order last |
-| 16 | message-flow-claude | F1 F4 F6 F10 | Order to working Claude flow | placed by Flow's rule; transcript holds it once |
+| 15 | message-flow-claude | F1 F4 F6* F10 | Notice then Order to asleep Claude metaflow | Queued, Woken; first prompt ends with the queue, Order last |
+| 16 | message-flow-claude | F1 F4 F6* F10 | Order to working Claude flow | placed by Flow's rule; transcript holds it once |
 
-F6's first option is vision-messaging's `Priority.[HardAbrupt MiddleAbrupt Soft]`
-as a head on the message datom; every send here heads its request with
-`Soft` (`Send.{ { Mind nexus Secondary } Soft.Order.«…» }`).
+F6* is not its first option: no tiers, per design. The request carries no
+priority head (`Send.{ { Mind nexus Secondary } Order.«…» }`).
 
 ## Running
 

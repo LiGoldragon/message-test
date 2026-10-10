@@ -1,7 +1,8 @@
 # Test 3. A send to a metaflow that does not exist:
 # `Refused.Unknown.{ Mind ghost Secondary }`, and no lock record is left
 # (a direct Lock on it is refused Unknown, never Held).
-# Forks, first option: F6, F8.
+# Forks, first option: F8.
+# F6: no tiers, per design (the request carries no priority head).
 {
   pkgs,
   flake,
@@ -11,7 +12,7 @@
 flake.lib.messageFlow { inherit pkgs flake system; } {
   name = "message-flow-unknown";
   forks = [
-    "F6"
+    "F6 no tiers, per design"
     "F8"
   ];
   script = ''

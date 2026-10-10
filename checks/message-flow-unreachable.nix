@@ -1,5 +1,6 @@
 # Test 11. Flow stopped, then a send: `Refused.FlowUnreachable`.
-# Forks, first option: F2 (the Flow edge is Flow's ordinary socket), F6.
+# Forks, first option: F2 (the Flow edge is Flow's ordinary socket).
+# F6: no tiers, per design (the request carries no priority head).
 {
   pkgs,
   flake,
@@ -10,7 +11,7 @@ flake.lib.messageFlow { inherit pkgs flake system; } {
   name = "message-flow-unreachable";
   forks = [
     "F2"
-    "F6"
+    "F6 no tiers, per design"
   ];
   script = ''
     start()

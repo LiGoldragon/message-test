@@ -1,6 +1,7 @@
 # Test 4. A send to an Ended metaflow: `Refused.Ended.{ Mind nexus Secondary }`
 # (the request returns to its sender), and its pane never shows the request.
-# Forks, first option: F6, F8.
+# Forks, first option: F8.
+# F6: no tiers, per design (the request carries no priority head).
 {
   pkgs,
   flake,
@@ -10,7 +11,7 @@
 flake.lib.messageFlow { inherit pkgs flake system; } {
   name = "message-flow-ended";
   forks = [
-    "F6"
+    "F6 no tiers, per design"
     "F8"
   ];
   script = ''

@@ -1,7 +1,8 @@
 # Test 6. { Field nexus Secondary } sends to { Mind nexus Secondary }, same
 # layer and topic across aspects: `Delivered`, and the recipient's pane shows
 # the sender and the request.
-# Forks, first option: F4, F6, F8, F10.
+# Forks, first option: F4, F8, F10.
+# F6: no tiers, per design (the request carries no priority head).
 {
   pkgs,
   flake,
@@ -12,7 +13,7 @@ flake.lib.messageFlow { inherit pkgs flake system; } {
   name = "message-flow-same-layer";
   forks = [
     "F4"
-    "F6"
+    "F6 no tiers, per design"
     "F8"
     "F10"
   ];

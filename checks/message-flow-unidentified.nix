@@ -1,7 +1,8 @@
 # Test 9. `message` run from a shell in no flow's pane (a Herdr pane bound to
 # no metaflow): `Refused.Unidentified.<pid>`.
-# Forks, first option: F6, F8 (caller read from the kernel peer), F11
+# Forks, first option: F8 (caller read from the kernel peer), F11
 # (senders that are no metaflow are refused Unidentified).
+# F6: no tiers, per design (the request carries no priority head).
 {
   pkgs,
   flake,
@@ -11,7 +12,7 @@
 flake.lib.messageFlow { inherit pkgs flake system; } {
   name = "message-flow-unidentified";
   forks = [
-    "F6"
+    "F6 no tiers, per design"
     "F8"
     "F11"
   ];

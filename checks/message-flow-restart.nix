@@ -1,6 +1,7 @@
 # Test 13. Message restarted, again with no arguments, on its existing store:
 # the send of test 1 is `Delivered` with no new Configure.
-# Forks, first option: F2, F6, F8.
+# Forks, first option: F2, F8.
+# F6: no tiers, per design (the request carries no priority head).
 {
   pkgs,
   flake,
@@ -11,7 +12,7 @@ flake.lib.messageFlow { inherit pkgs flake system; } {
   name = "message-flow-restart";
   forks = [
     "F2"
-    "F6"
+    "F6 no tiers, per design"
     "F8"
   ];
   script = ''
